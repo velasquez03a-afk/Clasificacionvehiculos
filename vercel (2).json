@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "builds": [
-    { "src": "Clasificacion_vehicular.html", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/Clasificacion_vehicular.html" }
-  ]
-}
