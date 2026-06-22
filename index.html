@@ -1,0 +1,2518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FleetIQ — Consulta de Vehículos</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #fff; color: #1a1a2e; min-height: 100vh; }
+
+/* ── NAV ── */
+nav {
+  background: #fff;
+  border-bottom: 1.5px solid #e5e7eb;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 58px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.nav-logo { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800; color: #1a1a2e; letter-spacing: -0.02em; }
+.nav-logo span { color: #4f46e5; }
+.nav-tabs { display: flex; gap: 0; }
+.nav-tab {
+  padding: 0.5rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  transition: all 0.18s;
+  user-select: none;
+}
+.nav-tab:hover { color: #1a1a2e; }
+.nav-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; font-weight: 600; }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ═══════════════════════════════
+   PAGE 1 — CONSULTA
+═══════════════════════════════ */
+.consulta-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+}
+.consulta-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 0.35rem;
+}
+.consulta-sub {
+  font-size: 0.88rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+.search-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.8rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+.search-row { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 0.9rem; margin-bottom: 1.2rem; }
+
+.field-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.field-group label { font-size: 0.75rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.06em; }
+.field-group input, .field-group select {
+  border: 1.5px solid #d1d5db;
+  border-radius: 9px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  color: #1a1a2e;
+  background: #f9fafb;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  width: 100%;
+}
+.field-group input:focus, .field-group select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+  background: #fff;
+}
+.field-group input::placeholder { color: #9ca3af; }
+
+.btn-buscar {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 0.65rem 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s;
+  width: 100%;
+  margin-top: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.btn-buscar:hover { background: #4338ca; transform: translateY(-1px); }
+
+/* sugerencias dropdown */
+.suggestions-wrap { position: relative; }
+.suggestions-box {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.sug-item {
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.12s;
+}
+.sug-item:last-child { border-bottom: none; }
+.sug-item:hover { background: #f5f3ff; color: #4f46e5; }
+.sug-brand { font-weight: 600; }
+.sug-model { color: #6b7280; margin-left: 0.3rem; font-size: 0.8rem; }
+
+/* resultado */
+.result-area { margin-top: 1.5rem; }
+
+.result-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.result-header {
+  padding: 1.3rem 1.6rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.rh-left .rh-brand { font-size: 0.72rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; }
+.rh-left .rh-model { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; color: #1a1a2e; line-height: 1.1; }
+.rh-left .rh-year { font-size: 0.8rem; color: #9ca3af; margin-top: 0.2rem; }
+.rh-badges { display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-end; }
+
+/* badges capacidad */
+.badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.28rem 0.75rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; }
+.badge.LITE       { background: #ecfdf5; color: #059669; border: 1.5px solid #a7f3d0; }
+.badge.CONFORT    { background: #eff6ff; color: #2563eb; border: 1.5px solid #bfdbfe; }
+.badge.XL         { background: #fff7ed; color: #ea580c; border: 1.5px solid #fed7aa; }
+.badge.XLCONFORT  { background: #f5f3ff; color: #7c3aed; border: 1.5px solid #ddd6fe; }
+.badge.VAN        { background: #fdf4ff; color: #a21caf; border: 1.5px solid #f0abfc; }
+.badge.auto-b  { background: #f5f3ff; color: #6d28d9; border: 1.5px solid #ddd6fe; }
+.badge.cam-b   { background: #fff7ed; color: #c2410c; border: 1.5px solid #fed7aa; }
+
+/* conflict alert */
+.conflict-alert {
+  margin: 0 1.6rem 0;
+  padding: 0.6rem 0.9rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: #92400e;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.result-specs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+.spec-cell {
+  padding: 1rem 1.4rem;
+  border-right: 1px solid #f3f4f6;
+  border-top: 1px solid #f3f4f6;
+}
+.spec-cell:nth-child(3n) { border-right: none; }
+.spec-cell .sc-label { font-size: 0.68rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem; }
+.spec-cell .sc-val { font-size: 1rem; font-weight: 600; color: #1a1a2e; }
+
+.result-footer {
+  padding: 0.85rem 1.6rem;
+  background: #f9fafb;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+.rf-tag { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 0.2rem 0.6rem; font-size: 0.72rem; color: #6b7280; }
+
+/* no result */
+.no-result {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #9ca3af;
+  font-size: 0.88rem;
+}
+.no-result .nr-icon { font-size: 2.2rem; margin-bottom: 0.6rem; }
+
+/* ═══════════════════════════════
+   PAGE 2 — TABLA
+═══════════════════════════════ */
+.tabla-wrap { padding: 1.5rem 2rem 5rem; }
+
+.tabla-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.tabla-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: #1a1a2e; }
+.tabla-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.tf-label { font-size: 0.75rem; color: #6b7280; font-weight: 500; }
+
+.filter-sel {
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.38rem 0.7rem;
+  font-size: 0.78rem;
+  font-family: 'Inter', sans-serif;
+  color: #374151;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+.filter-sel:focus { border-color: #4f46e5; }
+
+.search-table-input {
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.38rem 0.8rem;
+  font-size: 0.78rem;
+  font-family: 'Inter', sans-serif;
+  color: #374151;
+  background: #fff;
+  outline: none;
+  width: 200px;
+}
+.search-table-input:focus { border-color: #4f46e5; }
+
+/* TABLE */
+.table-container {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+thead { background: #f8f9fb; }
+thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1.5px solid #e5e7eb;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+thead th:hover { color: #4f46e5; }
+thead th.sorted { color: #4f46e5; }
+
+tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.12s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #fafbff; }
+
+tbody td {
+  padding: 0.7rem 1rem;
+  color: #374151;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.td-brand { font-weight: 600; color: #1a1a2e; }
+.td-model { color: #374151; }
+.td-num { font-variant-numeric: tabular-nums; color: #6b7280; }
+.td-body { color: #6b7280; font-size: 0.76rem; }
+
+.origin-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 0.35rem; vertical-align: middle; }
+.origin-dot.Japonesa { background: #ef4444; }
+.origin-dot.Coreana  { background: #3b82f6; }
+.origin-dot.China    { background: #f59e0b; }
+.origin-dot.Americana{ background: #10b981; }
+.origin-dot.Europea  { background: #8b5cf6; }
+
+/* row badges (small) */
+.rb { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 999px; font-size: 0.65rem; font-weight: 700; }
+.rb.LITE       { background: #ecfdf5; color: #059669; }
+.rb.CONFORT    { background: #eff6ff; color: #2563eb; }
+.rb.XL         { background: #fff7ed; color: #ea580c; }
+.rb.XLCONFORT  { background: #f5f3ff; color: #7c3aed; }
+.rb.VAN        { background: #fdf4ff; color: #a21caf; }
+.rb.auto-r  { background: #f5f3ff; color: #6d28d9; }
+.rb.cam-r   { background: #fff7ed; color: #c2410c; }
+
+.conflict-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; margin-left: 0.3rem; vertical-align: middle; title: "Conflicto tipo/capacidad"; }
+
+/* stats row */
+.stats-strip {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  flex-wrap: wrap;
+}
+.stat-box {
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.6rem 1.1rem;
+  min-width: 110px;
+}
+.stat-box .sb-num { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: #1a1a2e; }
+.stat-box .sb-label { font-size: 0.68rem; color: #9ca3af; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.05rem; }
+.stat-box.s-lite    .sb-num { color: #059669; }
+.stat-box.s-confort .sb-num { color: #2563eb; }
+.stat-box.s-xl      .sb-num { color: #ea580c; }
+.stat-box.s-van     .sb-num { color: #a21caf; }
+
+/* empty */
+.table-empty { text-align: center; padding: 3rem; color: #9ca3af; font-size: 0.85rem; }
+
+/* ── ADD MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s ease; }
+@media (min-width: 600px) { .modal-overlay { align-items: center; } }
+.modal {
+  background: #fff;
+  border-radius: 18px 18px 0 0;
+  padding: 1.8rem 1.8rem 2rem;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp 0.25s ease;
+}
+@media (min-width: 600px) { .modal { border-radius: 18px; } }
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: #f3f4f6; border: none; border-radius: 7px; width: 30px; height: 30px; font-size: 0.95rem; cursor: pointer; color: #6b7280; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: #e5e7eb; }
+.modal-title { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 800; margin-bottom: 1.2rem; color: #1a1a2e; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.modal-grid .fg-full { grid-column: 1/-1; }
+
+.btn-save {
+  width: 100%;
+  margin-top: 1.2rem;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.18s;
+}
+.btn-save:hover { background: #4338ca; }
+
+/* ── FAB ── */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 0.8rem 1.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(79,70,229,0.35);
+  font-family: 'Inter', sans-serif;
+  transition: transform 0.18s, box-shadow 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fab:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,70,229,0.45); }
+.fab-hidden { display: none; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+/* table count */
+.tbl-meta { font-size: 0.75rem; color: #9ca3af; }
+
+/* origen pequeño sobre la marca */
+.td-origen-label { font-size: 0.67rem; color: #9ca3af; line-height: 1; display: block; margin-bottom: 1px; }
+/* select directo */
+.sel-directo {
+  font-size: 0.72rem;
+  padding: 2px 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  color: #374151;
+}
+.sel-directo.si  { background:#dcfce7; color:#15803d; border-color:#86efac; font-weight:600; }
+.sel-directo.no  { background:#fee2e2; color:#b91c1c; border-color:#fca5a5; font-weight:600; }
+.sel-directo.nd  { background:#f3f4f6; color:#6b7280; }
+
+/* ── ADMIN PAGE ── */
+.admin-section {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1rem;
+}
+.admin-sec-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.8rem;
+}
+.admin-field label {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.admin-field input {
+  width: 100%;
+  padding: 0.45rem 0.7rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  color: #1a1a2e;
+  background: #f9fafb;
+  transition: border-color 0.15s;
+}
+.admin-field input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #fff;
+}
+.admin-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+
+
+/* ── VEHICLE EDITOR ── */
+.ve-table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+.ve-table th { background:#f3f4f6; color:#374151; font-weight:700; text-align:left;
+  padding:0.5rem 0.6rem; white-space:nowrap; border-bottom:2px solid #e5e7eb; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.03em;}
+.ve-table td { padding:0.35rem 0.4rem; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+.ve-table tr:hover td { background:#fafafa; }
+.ve-edit-input {
+  width:100%; padding:0.25rem 0.4rem;
+  border:1.5px solid transparent; border-radius:5px;
+  font-size:0.78rem; font-family:'Inter',sans-serif;
+  background:transparent; color:#1a1a2e;
+  transition:border-color 0.15s, background 0.15s;
+}
+.ve-edit-input:focus {
+  outline:none; border-color:#4f46e5; background:#f5f3ff;
+}
+.ve-save-btn {
+  background:#4f46e5; color:#fff; border:none; border-radius:6px;
+  padding:0.28rem 0.7rem; font-size:0.72rem; font-weight:700; cursor:pointer;
+  white-space:nowrap;
+}
+.ve-save-btn:hover { background:#3730a3; }
+.ve-reset-btn {
+  background:#fee2e2; color:#b91c1c; border:none; border-radius:6px;
+  padding:0.28rem 0.6rem; font-size:0.72rem; font-weight:600; cursor:pointer;
+  margin-left:3px;
+}
+.ve-reset-btn:hover { background:#fca5a5; }
+.ve-source-badge { font-size:0.65rem; padding:1px 5px; border-radius:10px; font-weight:600; }
+.ve-source-badge.base { background:#ede9fe; color:#6d28d9; }
+.ve-source-badge.excel { background:#fef9c3; color:#a16207; }
+.ve-edited-mark { color:#4f46e5; font-size:0.65rem; font-weight:700; }
+
+
+.del-row-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s, transform 0.15s;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.del-row-btn:hover {
+  opacity: 1;
+  background: #fee2e2;
+  transform: scale(1.15);
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Fleet<span>IQ</span></div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="goPage('consulta',this)">🔍 Consulta</div>
+    <div class="nav-tab" onclick="goPage('tabla',this)">📋 Catálogo</div>
+    <div class="nav-tab" onclick="goPage('admin',this)">⚙️ Admin</div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE 1 — CONSULTA
+══════════════════════════════════════ -->
+<div class="page active" id="page-consulta">
+  <div class="consulta-wrap">
+    <div class="consulta-title">Consulta de vehículos</div>
+    <div class="consulta-sub">Ingresa la marca y modelo para obtener la clasificación del vehículo.</div>
+
+    <div class="search-card">
+      <div class="search-row" style="grid-template-columns:1fr 1fr;">
+        <!-- MARCA -->
+        <div class="field-group suggestions-wrap">
+          <label>Marca</label>
+          <input id="q_brand" type="text" placeholder="Toyota, BYD, JAC..." autocomplete="off" oninput="onBrandInput()" onblur="hideSug('sug-brand',300)" onkeydown="if(event.key==='Enter') buscar()"/>
+          <div class="suggestions-box" id="sug-brand" style="display:none"></div>
+        </div>
+        <!-- MODELO -->
+        <div class="field-group suggestions-wrap">
+          <label>Modelo</label>
+          <input id="q_model" type="text" placeholder="Wigo, F3, X70..." autocomplete="off" oninput="onModelInput()" onblur="hideSug('sug-model',300)" onkeydown="if(event.key==='Enter') buscar()"/>
+          <div class="suggestions-box" id="sug-model" style="display:none"></div>
+        </div>
+      </div>
+      <button class="btn-buscar" onclick="buscar()">Consultar vehículo →</button>
+    </div>
+
+    <div class="result-area" id="resultArea"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 2 — TABLA
+══════════════════════════════════════ -->
+<div class="page" id="page-tabla">
+  <div class="tabla-wrap">
+
+    <div class="tabla-topbar">
+      <div>
+        <div class="tabla-title">Catálogo de vehículos</div>
+        <div class="tbl-meta" id="tblMeta">Cargando...</div>
+      </div>
+      <div class="tabla-filters">
+        <span class="tf-label">Filtrar:</span>
+        <input class="search-table-input" id="tblSearch" type="text" placeholder="Buscar marca o modelo..." oninput="renderTable()"/>
+        <select class="filter-sel" id="fCat" onchange="renderTable()">
+          <option value="">Todas las categorías</option>
+          <option>LITE</option><option>CONFORT</option><option>XL</option><option value="XLCONFORT">XL CONFORT</option><option>VAN</option>
+        </select>
+        <select class="filter-sel" id="fVtype" onchange="renderTable()">
+          <option value="">Auto / Camioneta</option>
+          <option value="Auto">Auto</option>
+          <option value="Camioneta">Camioneta</option>
+        </select>
+        <select class="filter-sel" id="fOrigin" onchange="renderTable()">
+          <option value="">Todos los orígenes</option>
+          <option>Japonesa</option><option>Coreana</option><option>China</option>
+          <option>Americana</option><option>Europea</option>
+        </select>
+        <!-- Filtros por columna numérica -->
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;width:100%;">
+          <span class="tf-label">Columna:</span>
+          <select class="filter-sel" id="fColKey" style="min-width:130px;" onchange="renderTable()">
+            <option value="">— Filtrar columna —</option>
+            <option value="pax">Pasajeros (PAX)</option>
+            <option value="length">Longitud (m)</option>
+            <option value="luggage">Equipaje (L)</option>
+            <option value="width">Ancho (m)</option>
+            <option value="height">Alto (m)</option>
+            <option value="year">Año</option>
+          </select>
+          <select class="filter-sel" id="fColOp" style="min-width:60px;" onchange="renderTable()">
+            <option value="gte">≥</option>
+            <option value="lte">≤</option>
+            <option value="eq">=</option>
+          </select>
+          <input class="search-table-input" id="fColVal" type="number" step="0.01"
+                 placeholder="valor" style="width:90px;padding:0.4rem 0.6rem;"
+                 oninput="renderTable()"/>
+          <button onclick="clearColFilter()" style="background:#f3f4f6;border:1.5px solid #d1d5db;border-radius:8px;padding:0.35rem 0.8rem;font-size:0.8rem;font-weight:600;cursor:pointer;color:#374151;">✕ Limpiar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-strip" id="statsStrip"></div>
+
+    <!-- BOTÓN + PANEL DE CRITERIOS -->
+    <div style="padding:0 0 10px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <button onclick="toggleCriteriosPanel()" id="btn-criterios"
+              style="display:inline-flex;align-items:center;gap:6px;background:#f5f3ff;border:1.5px solid #c4b5fd;color:#6d28d9;border-radius:9px;padding:6px 14px;font-size:0.83rem;font-weight:700;cursor:pointer;">
+        ⚙ Criterios de admisión
+        <span id="criterios-badge" style="display:none;background:#6d28d9;color:#fff;border-radius:99px;padding:1px 7px;font-size:0.75rem;"></span>
+      </button>
+      <span id="criterios-active-hint" style="font-size:0.78rem;color:#7c3aed;font-weight:600;"></span>
+    </div>
+
+    <div id="criterios-panel" style="display:none;background:#faf5ff;border:1.5px solid #c4b5fd;border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-weight:800;font-size:0.95rem;color:#6d28d9;margin-bottom:12px;">⚙ Criterios de admisión — Vehículos no admitidos se ocultarán del catálogo</div>
+      <!-- Agregar nuevo criterio -->
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #e9d5ff;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-size:0.73rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;">Columna</span>
+          <select id="cr_col" style="border:1.5px solid #c4b5fd;border-radius:8px;padding:6px 10px;font-size:0.84rem;min-width:160px;background:#fff;">
+            <option value="">— Seleccionar —</option>
+            <option value="pax">Pasajeros (PAX)</option>
+            <option value="length">Longitud (m)</option>
+            <option value="luggage">Equipaje (L)</option>
+            <option value="width">Ancho (m)</option>
+            <option value="height">Alto (m)</option>
+            <option value="year">Año</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-size:0.73rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;">Condición</span>
+          <select id="cr_op" style="border:1.5px solid #c4b5fd;border-radius:8px;padding:6px 10px;font-size:0.84rem;background:#fff;">
+            <option value="gte">≥ mayor o igual</option>
+            <option value="lte">≤ menor o igual</option>
+            <option value="eq">= igual a</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-size:0.73rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;">Valor</span>
+          <input id="cr_val" type="number" step="0.01" placeholder="Ej. 4.20"
+                 style="border:1.5px solid #c4b5fd;border-radius:8px;padding:6px 10px;font-size:0.84rem;width:110px;background:#fff;"/>
+        </div>
+        <button onclick="agregarCriterio()"
+                style="background:#6d28d9;color:#fff;border:none;border-radius:9px;padding:8px 18px;font-size:0.84rem;font-weight:700;cursor:pointer;align-self:flex-end;">
+          + Agregar criterio
+        </button>
+        <span id="cr_msg" style="font-size:0.82rem;font-weight:600;align-self:flex-end;"></span>
+      </div>
+      <!-- Lista de criterios guardados -->
+      <div style="font-size:0.78rem;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Criterios activos</div>
+      <div id="criterios-lista"></div>
+      <button onclick="borrarTodosCriterios()"
+              style="margin-top:10px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 14px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+        ✕ Borrar todos los criterios
+      </button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="setSort('brand')">Marca ↕</th>
+            <th onclick="setSort('model')">Modelo ↕</th>
+            <th onclick="setSort('year')">Año ↕</th>
+            <th onclick="setSort('cat')">Cap. Flota ↕</th>
+            <th onclick="setSort('vehicleType')">Tipo Marca ↕</th>
+            <th onclick="setSort('pax')">Pasajeros ↕</th>
+            <th onclick="setSort('length')">Longitud ↕</th>
+            <th onclick="setSort('luggage')">Equipaje ↕</th>
+            <th onclick="setSort('width')">Ancho ↕</th>
+            <th onclick="setSort('height')">Alto ↕</th>
+            <th>Carrocería</th>
+            <th onclick="setSort('origin')">Origen ↕</th>
+            <th>Admitida Directo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="addModal" style="display:none" onclick="closeModalClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddModal()">✕</button>
+    <div class="modal-title">Agregar nuevo vehículo</div>
+    <div class="modal-grid">
+      <div class="field-group"><label>Marca *</label><input id="a_brand" placeholder="Toyota"/></div>
+      <div class="field-group"><label>Modelo *</label><input id="a_model" placeholder="Wigo"/></div>
+      <div class="field-group"><label>Año</label><input id="a_year" type="number" placeholder="2024"/></div>
+      <div class="field-group"><label>Pasajeros</label><input id="a_pax" type="number" placeholder="5"/></div>
+      <div class="field-group"><label>Longitud (m)</label><input id="a_len" type="number" step="0.01" placeholder="3.66"/></div>
+      <div class="field-group"><label>Ancho (m)</label><input id="a_width" type="number" step="0.01" placeholder="1.60"/></div>
+      <div class="field-group"><label>Alto (m)</label><input id="a_height" type="number" step="0.01" placeholder="1.52"/></div>
+      <div class="field-group"><label>Equipaje (L)</label><input id="a_lug" type="number" placeholder="232"/></div>
+      <div class="field-group fg-full"><label>Tipo de carrocería</label>
+        <select id="a_body">
+          <option value="">Seleccionar</option>
+          <option>Hatchback</option><option>Sedan</option>
+          <option>SUV Compacto</option><option>SUV Mediano</option><option>SUV Grande</option>
+          <option>Pickup</option><option>Minivan</option><option>Van</option>
+        </select>
+      </div>
+      <div class="field-group"><label>Tipo según fabricante</label>
+        <select id="a_vtype"><option value="Auto">Auto</option><option value="Camioneta">Camioneta</option></select>
+      </div>
+      <div class="field-group"><label>Origen</label>
+        <select id="a_origin">
+          <option>Japonesa</option><option>Coreana</option><option>China</option>
+          <option>Americana</option><option>Europea</option><option>Otra</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveVehicle()">Guardar vehículo</button>
+  </div>
+</div>
+
+<!-- FAB (solo en página catálogo) -->
+<button class="fab fab-hidden" id="fabBtn" onclick="openAddModal()">＋ Agregar modelo</button>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// BASE DE DATOS
+// ═══════════════════════════════════════════════════════════
+const VEHICLES_DB = [
+  {brand:"Toyota",model:"Wigo",year:2023,pax:5,length:3.66,luggage:232,width:1.6,height:1.52,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Yaris",year:2023,pax:5,length:3.94,luggage:270,width:1.73,height:1.5,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Yaris Sedan",year:2023,pax:5,length:4.41,luggage:347,width:1.73,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Vios",year:2023,pax:5,length:4.47,luggage:480,width:1.74,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Corolla",year:2023,pax:5,length:4.64,luggage:371,width:1.78,height:1.44,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Camry",year:2018,pax:5,length:4.86,luggage:524,width:1.84,height:1.44,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Camry",year:2023,pax:5,length:4.92,luggage:493,width:1.84,height:1.44,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"GR86",year:2023,pax:4,length:4.27,luggage:165,width:1.78,height:1.31,body:"Coupe",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Prius",year:2023,pax:5,length:4.6,luggage:411,width:1.78,height:1.43,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Corolla Cross",year:2023,pax:5,length:4.46,luggage:440,width:1.82,height:1.62,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"C-HR",year:2023,pax:5,length:4.36,luggage:377,width:1.8,height:1.57,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Rush",year:2023,pax:7,length:4.43,luggage:390,width:1.7,height:1.7,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Avanza",year:2023,pax:7,length:4.39,luggage:505,width:1.73,height:1.7,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Veloz",year:2023,pax:7,length:4.48,luggage:395,width:1.75,height:1.7,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Venza",year:2023,pax:5,length:4.88,luggage:508,width:1.86,height:1.65,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"RAV4",year:2023,pax:5,length:4.6,luggage:580,width:1.86,height:1.68,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Highlander",year:2023,pax:8,length:4.97,luggage:457,width:1.93,height:1.74,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"4Runner",year:2023,pax:7,length:4.83,luggage:697,width:1.88,height:1.84,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Fortuner",year:2023,pax:7,length:4.8,luggage:556,width:1.86,height:1.84,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Prado",year:2023,pax:7,length:4.83,luggage:620,width:1.89,height:1.83,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Land Cruiser 300",year:2023,pax:7,length:4.95,luggage:700,width:1.98,height:1.9,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Sequoia",year:2023,pax:8,length:5.18,luggage:858,width:2.0,height:1.93,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Hilux",year:2016,pax:5,length:5.33,luggage:0,width:1.85,height:1.82,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Hilux",year:2023,pax:5,length:5.33,luggage:0,width:1.86,height:1.82,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Hilux SW4",year:2023,pax:7,length:4.79,luggage:555,width:1.86,height:1.84,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Tundra",year:2023,pax:5,length:5.81,luggage:0,width:2.03,height:1.97,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Tacoma",year:2023,pax:5,length:5.27,luggage:0,width:1.9,height:1.82,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"FJ Cruiser",year:2023,pax:5,length:4.66,luggage:348,width:1.9,height:1.83,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Innova",year:2016,pax:7,length:4.74,luggage:430,width:1.78,height:1.8,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Innova",year:2023,pax:8,length:4.74,luggage:455,width:1.85,height:1.8,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Sienna",year:2023,pax:8,length:5.18,luggage:1030,width:1.99,height:1.76,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"HiAce H300 Commuter",year:2019,pax:12,length:5.38,luggage:1800,width:1.88,height:2.28,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"HiAce H300 Super GL",year:2019,pax:10,length:5.38,luggage:1500,width:1.88,height:2.1,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"HiAce H300 Commuter",year:2023,pax:12,length:5.38,luggage:1800,width:1.88,height:2.3,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"bZ4X",year:2023,pax:5,length:4.69,luggage:452,width:1.86,height:1.65,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"UX 200",year:2023,pax:5,length:4.5,luggage:283,width:1.84,height:1.52,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"UX 300e",year:2023,pax:5,length:4.5,luggage:177,width:1.84,height:1.52,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"NX 250",year:2022,pax:5,length:4.66,luggage:520,width:1.87,height:1.66,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"NX 350h",year:2022,pax:5,length:4.66,luggage:498,width:1.87,height:1.66,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"RX 350",year:2023,pax:5,length:4.89,luggage:612,width:1.92,height:1.7,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"GX 460",year:2023,pax:7,length:4.89,luggage:555,width:1.88,height:1.86,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"LX 600",year:2023,pax:7,length:5.1,luggage:729,width:2.0,height:1.9,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Lexus",model:"ES 300h",year:2023,pax:5,length:4.97,luggage:454,width:1.87,height:1.44,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Lexus",model:"IS 300",year:2023,pax:5,length:4.71,luggage:480,width:1.84,height:1.43,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"Brio",year:2023,pax:5,length:3.79,luggage:210,width:1.68,height:1.5,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"Fit",year:2023,pax:5,length:3.99,luggage:370,width:1.69,height:1.53,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"Civic",year:2016,pax:5,length:4.5,luggage:519,width:1.79,height:1.43,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"Civic",year:2022,pax:5,length:4.67,luggage:519,width:1.8,height:1.41,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"Accord",year:2023,pax:5,length:4.97,luggage:473,width:1.86,height:1.45,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"City",year:2023,pax:5,length:4.55,luggage:519,width:1.74,height:1.47,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"HR-V",year:2022,pax:5,length:4.34,luggage:437,width:1.79,height:1.59,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"HR-V",year:2023,pax:5,length:4.33,luggage:435,width:1.79,height:1.59,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"ZR-V",year:2023,pax:5,length:4.57,luggage:385,width:1.84,height:1.6,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"CR-V",year:2023,pax:5,length:4.7,luggage:589,width:1.86,height:1.69,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"Passport",year:2023,pax:5,length:4.9,luggage:786,width:1.98,height:1.74,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"Pilot",year:2023,pax:8,length:5.04,luggage:499,width:1.99,height:1.79,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"Ridgeline",year:2023,pax:5,length:5.33,luggage:0,width:1.94,height:1.71,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"BR-V",year:2023,pax:7,length:4.45,luggage:280,width:1.74,height:1.63,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"Odyssey",year:2023,pax:8,length:5.17,luggage:975,width:1.99,height:1.73,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"March",year:2023,pax:5,length:3.83,luggage:265,width:1.66,height:1.52,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Nissan",model:"Sentra",year:2023,pax:5,length:4.64,luggage:470,width:1.79,height:1.44,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Nissan",model:"Versa",year:2023,pax:5,length:4.49,luggage:454,width:1.75,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Nissan",model:"Kicks",year:2023,pax:5,length:4.3,luggage:432,width:1.76,height:1.59,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"X-Trail",year:2022,pax:7,length:4.64,luggage:565,width:1.84,height:1.72,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"X-Trail",year:2023,pax:7,length:4.68,luggage:565,width:1.84,height:1.72,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Murano",year:2023,pax:5,length:4.89,luggage:855,width:1.9,height:1.7,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Pathfinder",year:2023,pax:8,length:5.0,luggage:498,width:1.97,height:1.78,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Armada",year:2023,pax:8,length:5.31,luggage:635,width:2.03,height:1.94,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Patrol",year:2023,pax:7,length:5.17,luggage:620,width:2.0,height:1.94,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Frontier",year:2022,pax:5,length:5.15,luggage:0,width:1.86,height:1.79,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Frontier",year:2023,pax:5,length:5.25,luggage:0,width:1.85,height:1.79,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Navara",year:2023,pax:5,length:5.25,luggage:0,width:1.85,height:1.79,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Urvan",year:2023,pax:12,length:5.37,luggage:1800,width:1.87,height:2.1,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"NV350",year:2023,pax:3,length:5.28,luggage:5280,width:1.87,height:2.28,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"2",year:2023,pax:5,length:4.07,luggage:280,width:1.7,height:1.5,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Mazda",model:"3",year:2019,pax:5,length:4.46,luggage:351,width:1.8,height:1.43,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Mazda",model:"3",year:2023,pax:5,length:4.66,luggage:358,width:1.8,height:1.44,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Mazda",model:"6",year:2023,pax:5,length:4.87,luggage:480,width:1.84,height:1.45,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Mazda",model:"CX-30",year:2023,pax:5,length:4.4,luggage:430,width:1.8,height:1.55,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"CX-5",year:2023,pax:5,length:4.55,luggage:442,width:1.84,height:1.68,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"CX-50",year:2023,pax:5,length:4.71,luggage:503,width:1.92,height:1.65,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"CX-60",year:2023,pax:5,length:4.74,luggage:570,width:1.89,height:1.69,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"CX-90",year:2023,pax:8,length:5.1,luggage:491,width:1.99,height:1.71,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"CX-9",year:2023,pax:7,length:5.07,luggage:470,width:1.97,height:1.73,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"BT-50",year:2021,pax:5,length:5.26,luggage:0,width:1.85,height:1.78,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"BT-50",year:2023,pax:5,length:5.28,luggage:0,width:1.87,height:1.79,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Mirage",year:2023,pax:5,length:3.87,luggage:235,width:1.67,height:1.55,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Mitsubishi",model:"Attrage",year:2023,pax:5,length:4.41,luggage:450,width:1.72,height:1.51,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Mitsubishi",model:"ASX",year:2023,pax:5,length:4.45,luggage:422,width:1.8,height:1.62,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Eclipse Cross",year:2023,pax:5,length:4.55,luggage:448,width:1.81,height:1.69,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Outlander",year:2022,pax:7,length:4.71,luggage:545,width:1.86,height:1.74,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Outlander",year:2023,pax:7,length:4.71,luggage:545,width:1.86,height:1.74,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Outlander PHEV",year:2023,pax:7,length:4.71,luggage:439,width:1.86,height:1.74,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Montero Sport",year:2023,pax:7,length:4.9,luggage:530,width:1.88,height:1.85,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Pajero",year:2023,pax:7,length:4.9,luggage:620,width:1.88,height:1.84,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"L200 Triton",year:2019,pax:5,length:5.28,luggage:0,width:1.82,height:1.76,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"L200 Triton",year:2023,pax:5,length:5.28,luggage:0,width:1.85,height:1.78,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Alto",year:2023,pax:5,length:3.49,luggage:139,width:1.53,height:1.52,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"Celerio",year:2023,pax:5,length:3.7,luggage:254,width:1.6,height:1.56,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"Swift",year:2017,pax:5,length:3.84,luggage:242,width:1.74,height:1.48,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"Swift",year:2023,pax:5,length:3.86,luggage:265,width:1.74,height:1.5,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"Baleno",year:2023,pax:5,length:3.99,luggage:318,width:1.75,height:1.5,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"Ciaz",year:2023,pax:5,length:4.49,luggage:510,width:1.73,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"Vitara",year:2023,pax:5,length:4.17,luggage:398,width:1.77,height:1.6,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"S-Cross",year:2022,pax:5,length:4.3,luggage:430,width:1.8,height:1.57,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Across",year:2023,pax:5,length:4.5,luggage:490,width:1.86,height:1.65,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Jimny",year:2018,pax:4,length:3.64,luggage:113,width:1.65,height:1.73,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Jimny",year:2023,pax:4,length:3.64,luggage:113,width:1.65,height:1.73,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Grand Vitara",year:2023,pax:5,length:4.38,luggage:375,width:1.83,height:1.64,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Subaru",model:"Impreza",year:2023,pax:5,length:4.48,luggage:385,width:1.77,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Subaru",model:"BRZ",year:2023,pax:4,length:4.27,luggage:237,width:1.78,height:1.31,body:"Coupe",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Subaru",model:"Crosstrek",year:2023,pax:5,length:4.48,luggage:385,width:1.8,height:1.58,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Subaru",model:"Forester",year:2019,pax:5,length:4.63,luggage:520,width:1.82,height:1.73,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Subaru",model:"Forester",year:2023,pax:5,length:4.64,luggage:520,width:1.82,height:1.73,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Subaru",model:"Outback",year:2023,pax:5,length:4.87,luggage:559,width:1.87,height:1.67,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Subaru",model:"Legacy",year:2023,pax:5,length:4.79,luggage:430,width:1.84,height:1.5,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Subaru",model:"Ascent",year:2023,pax:8,length:4.99,luggage:520,width:1.93,height:1.82,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Subaru",model:"Solterra",year:2023,pax:5,length:4.69,luggage:452,width:1.86,height:1.65,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Daihatsu",model:"Ayla",year:2023,pax:5,length:3.6,luggage:190,width:1.6,height:1.52,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Daihatsu",model:"Sirion",year:2023,pax:5,length:3.64,luggage:205,width:1.6,height:1.55,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Daihatsu",model:"Terios",year:2023,pax:7,length:4.18,luggage:346,width:1.71,height:1.7,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Daihatsu",model:"Rocky",year:2023,pax:5,length:3.99,luggage:369,width:1.71,height:1.63,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Daihatsu",model:"Gran Max",year:2023,pax:9,length:4.69,luggage:3000,width:1.66,height:2.02,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Isuzu",model:"D-Max",year:2020,pax:5,length:5.3,luggage:0,width:1.86,height:1.79,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Isuzu",model:"D-Max",year:2023,pax:5,length:5.33,luggage:0,width:1.87,height:1.79,body:"Pickup",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Isuzu",model:"MU-X",year:2021,pax:7,length:4.84,luggage:521,width:1.87,height:1.82,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Isuzu",model:"MU-X",year:2023,pax:7,length:4.84,luggage:521,width:1.87,height:1.82,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Isuzu",model:"Traviz",year:2023,pax:3,length:5.19,luggage:4500,width:1.78,height:2.15,body:"Van",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Infiniti",model:"QX50",year:2023,pax:5,length:4.7,luggage:637,width:1.93,height:1.68,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Infiniti",model:"QX60",year:2023,pax:7,length:5.09,luggage:432,width:1.99,height:1.75,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Infiniti",model:"QX80",year:2023,pax:8,length:5.34,luggage:595,width:2.02,height:1.92,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"i10",year:2023,pax:5,length:3.67,luggage:252,width:1.68,height:1.49,body:"Hatchback",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"i20",year:2023,pax:5,length:4.04,luggage:311,width:1.77,height:1.49,body:"Hatchback",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"Accent",year:2023,pax:5,length:4.44,luggage:480,width:1.73,height:1.46,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"Elantra",year:2021,pax:5,length:4.68,luggage:473,width:1.82,height:1.45,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"Elantra",year:2023,pax:5,length:4.68,luggage:473,width:1.82,height:1.45,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"Sonata",year:2023,pax:5,length:4.9,luggage:510,width:1.86,height:1.45,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"Venue",year:2023,pax:5,length:4.04,luggage:350,width:1.77,height:1.59,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Kona",year:2023,pax:5,length:4.35,luggage:374,width:1.82,height:1.57,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Kona",year:2024,pax:5,length:4.39,luggage:466,width:1.83,height:1.57,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Tucson",year:2021,pax:5,length:4.63,luggage:620,width:1.87,height:1.65,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Tucson",year:2023,pax:5,length:4.63,luggage:620,width:1.87,height:1.65,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Santa Fe",year:2023,pax:7,length:4.83,luggage:616,width:1.9,height:1.71,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Santa Fe",year:2024,pax:7,length:4.83,luggage:634,width:1.9,height:1.72,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Palisade",year:2023,pax:8,length:4.99,luggage:524,width:1.98,height:1.75,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Staria",year:2023,pax:9,length:5.25,luggage:734,width:1.99,height:1.99,body:"Van",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"IONIQ 5",year:2023,pax:5,length:4.64,luggage:527,width:1.89,height:1.61,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"IONIQ 6",year:2023,pax:5,length:4.86,luggage:401,width:1.88,height:1.5,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Kia",model:"Picanto",year:2023,pax:5,length:3.6,luggage:255,width:1.6,height:1.49,body:"Hatchback",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Kia",model:"Rio",year:2023,pax:5,length:4.07,luggage:325,width:1.72,height:1.45,body:"Hatchback",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Kia",model:"K5",year:2023,pax:5,length:4.9,luggage:480,width:1.86,height:1.44,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Kia",model:"Stinger",year:2023,pax:5,length:4.83,luggage:406,width:1.87,height:1.4,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Kia",model:"Stonic",year:2023,pax:5,length:4.14,luggage:352,width:1.76,height:1.5,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Seltos",year:2023,pax:5,length:4.37,luggage:433,width:1.8,height:1.63,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Seltos",year:2024,pax:5,length:4.4,luggage:476,width:1.82,height:1.64,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Sportage",year:2022,pax:5,length:4.52,luggage:543,width:1.87,height:1.65,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Sportage",year:2023,pax:5,length:4.52,luggage:543,width:1.87,height:1.65,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Sorento",year:2023,pax:7,length:4.81,luggage:637,width:1.9,height:1.7,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Telluride",year:2023,pax:8,length:4.99,luggage:630,width:1.99,height:1.75,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Carnival",year:2023,pax:8,length:5.15,luggage:627,width:2.0,height:1.74,body:"Van",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"EV6",year:2023,pax:5,length:4.69,luggage:490,width:1.88,height:1.55,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"EV9",year:2023,pax:7,length:5.01,luggage:333,width:1.98,height:1.78,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Niro",year:2023,pax:5,length:4.42,luggage:451,width:1.83,height:1.57,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Genesis",model:"GV70",year:2023,pax:5,length:4.72,luggage:503,width:1.91,height:1.64,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Genesis",model:"GV80",year:2023,pax:5,length:4.96,luggage:703,width:1.97,height:1.7,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Genesis",model:"G80",year:2023,pax:5,length:4.99,luggage:480,width:1.91,height:1.46,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Genesis",model:"G70",year:2023,pax:5,length:4.69,luggage:340,width:1.85,height:1.4,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"KGM",model:"Torres",year:2023,pax:5,length:4.69,luggage:703,width:1.9,height:1.73,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"KGM",model:"Korando",year:2023,pax:5,length:4.45,luggage:551,width:1.87,height:1.68,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"KGM",model:"Musso",year:2023,pax:5,length:5.1,luggage:0,width:1.93,height:1.82,body:"Pickup",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"KGM",model:"Rexton",year:2023,pax:7,length:4.85,luggage:820,width:1.96,height:1.8,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Spark",year:2023,pax:5,length:3.72,luggage:170,width:1.63,height:1.48,body:"Hatchback",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Chevrolet",model:"Onix",year:2023,pax:5,length:4.05,luggage:238,width:1.73,height:1.48,body:"Hatchback",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Chevrolet",model:"Cruze",year:2023,pax:5,length:4.66,luggage:350,width:1.8,height:1.44,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Chevrolet",model:"Malibu",year:2023,pax:5,length:4.92,luggage:424,width:1.86,height:1.46,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Chevrolet",model:"Tracker",year:2020,pax:5,length:4.27,luggage:393,width:1.78,height:1.6,body:"SUV Compacto",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Tracker",year:2023,pax:5,length:4.27,luggage:393,width:1.79,height:1.6,body:"SUV Compacto",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Equinox",year:2023,pax:5,length:4.65,luggage:861,width:1.84,height:1.68,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Blazer",year:2023,pax:5,length:4.87,luggage:889,width:1.93,height:1.69,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Trailblazer",year:2021,pax:7,length:4.64,luggage:498,width:1.78,height:1.71,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Trailblazer",year:2023,pax:7,length:4.64,luggage:498,width:1.79,height:1.71,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Traverse",year:2023,pax:8,length:5.19,luggage:618,width:2.0,height:1.78,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Tahoe",year:2023,pax:8,length:5.18,luggage:746,width:2.06,height:1.93,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Suburban",year:2023,pax:9,length:5.77,luggage:746,width:2.06,height:1.93,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Colorado",year:2023,pax:5,length:5.42,luggage:0,width:1.9,height:1.82,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Silverado",year:2023,pax:5,length:5.82,luggage:0,width:2.03,height:1.93,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"GMC",model:"Terrain",year:2023,pax:5,length:4.65,luggage:953,width:1.84,height:1.68,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"GMC",model:"Canyon",year:2023,pax:5,length:5.42,luggage:0,width:1.9,height:1.82,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"GMC",model:"Sierra",year:2023,pax:5,length:5.84,luggage:0,width:2.05,height:1.91,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"GMC",model:"Yukon",year:2023,pax:9,length:5.18,luggage:688,width:2.06,height:1.93,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"GMC",model:"Yukon XL",year:2023,pax:9,length:5.77,luggage:688,width:2.06,height:1.93,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Fiesta",year:2023,pax:5,length:4.07,luggage:295,width:1.72,height:1.48,body:"Hatchback",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Ford",model:"Focus",year:2023,pax:5,length:4.39,luggage:316,width:1.82,height:1.47,body:"Hatchback",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Ford",model:"Mustang",year:2023,pax:4,length:4.79,luggage:382,width:1.92,height:1.38,body:"Coupe",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Ford",model:"Mustang Mach-E",year:2023,pax:5,length:4.71,luggage:402,width:1.88,height:1.6,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"EcoSport",year:2023,pax:5,length:4.18,luggage:341,width:1.76,height:1.65,body:"SUV Compacto",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Escape",year:2023,pax:5,length:4.63,luggage:571,width:1.88,height:1.68,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Bronco Sport",year:2023,pax:5,length:4.38,luggage:595,width:1.84,height:1.76,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Bronco",year:2023,pax:5,length:4.43,luggage:283,width:1.88,height:1.86,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Edge",year:2023,pax:5,length:4.76,luggage:602,width:1.93,height:1.72,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Explorer",year:2023,pax:7,length:5.05,luggage:515,width:2.0,height:1.78,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Expedition",year:2023,pax:8,length:5.33,luggage:595,width:2.04,height:1.94,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Ranger",year:2022,pax:5,length:5.25,luggage:0,width:1.85,height:1.78,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Ranger",year:2023,pax:5,length:5.37,luggage:0,width:1.92,height:1.88,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Maverick",year:2023,pax:5,length:5.0,luggage:0,width:1.87,height:1.7,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"F-150",year:2023,pax:5,length:5.89,luggage:0,width:2.03,height:1.96,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"F-150 Lightning",year:2023,pax:5,length:5.89,luggage:0,width:2.03,height:2.02,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Transit Van",year:2023,pax:3,length:5.53,luggage:6000,width:2.06,height:2.47,body:"Van",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ford",model:"Tourneo Custom",year:2023,pax:9,length:5.05,luggage:700,width:2.0,height:1.97,body:"Van",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Jeep",model:"Renegade",year:2023,pax:5,length:4.23,luggage:351,width:1.8,height:1.7,body:"SUV Compacto",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Jeep",model:"Compass",year:2023,pax:5,length:4.39,luggage:438,width:1.82,height:1.64,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Jeep",model:"Cherokee",year:2023,pax:5,length:4.62,luggage:561,width:1.86,height:1.65,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Jeep",model:"Wrangler",year:2023,pax:5,length:4.34,luggage:142,width:1.89,height:1.84,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Jeep",model:"Grand Cherokee",year:2022,pax:5,length:4.83,luggage:595,width:1.94,height:1.78,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Jeep",model:"Grand Cherokee",year:2023,pax:7,length:4.93,luggage:578,width:1.98,height:1.78,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Jeep",model:"Gladiator",year:2023,pax:5,length:5.59,luggage:0,width:1.89,height:1.84,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ram",model:"700",year:2023,pax:5,length:5.2,luggage:0,width:1.8,height:1.7,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ram",model:"1500",year:2023,pax:5,length:5.85,luggage:0,width:2.03,height:1.95,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Ram",model:"ProMaster",year:2023,pax:3,length:5.62,luggage:6370,width:2.19,height:2.83,body:"Van",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Dodge",model:"Charger",year:2023,pax:5,length:5.0,luggage:459,width:1.9,height:1.45,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Dodge",model:"Durango",year:2023,pax:7,length:4.99,luggage:602,width:1.98,height:1.78,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Dodge",model:"Hornet",year:2023,pax:5,length:4.39,luggage:506,width:1.87,height:1.62,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chrysler",model:"Pacifica",year:2023,pax:8,length:5.2,luggage:900,width:2.02,height:1.74,body:"Van",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Cadillac",model:"XT4",year:2023,pax:5,length:4.6,luggage:634,width:1.88,height:1.63,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Cadillac",model:"XT5",year:2023,pax:5,length:4.81,luggage:851,width:1.93,height:1.68,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Cadillac",model:"XT6",year:2023,pax:7,length:5.05,luggage:563,width:1.96,height:1.74,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Cadillac",model:"Escalade",year:2023,pax:7,length:5.18,luggage:675,width:2.07,height:1.93,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Cadillac",model:"Lyriq",year:2023,pax:5,length:4.99,luggage:793,width:1.98,height:1.62,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Lincoln",model:"Nautilus",year:2023,pax:5,length:4.79,luggage:992,width:1.93,height:1.68,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Lincoln",model:"Navigator",year:2023,pax:8,length:5.29,luggage:594,width:2.07,height:1.94,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Tesla",model:"Model 3",year:2023,pax:5,length:4.69,luggage:682,width:1.85,height:1.44,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Tesla",model:"Model 3",year:2024,pax:5,length:4.72,luggage:594,width:1.85,height:1.44,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Tesla",model:"Model Y",year:2023,pax:5,length:4.75,luggage:854,width:1.92,height:1.62,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Tesla",model:"Model S",year:2023,pax:5,length:4.97,luggage:793,width:1.96,height:1.43,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Tesla",model:"Model X",year:2023,pax:7,length:5.04,luggage:651,width:1.99,height:1.68,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Tesla",model:"Cybertruck",year:2024,pax:5,length:5.68,luggage:0,width:2.21,height:1.79,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Rivian",model:"R1T",year:2023,pax:5,length:5.48,luggage:0,width:2.01,height:1.96,body:"Pickup",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Rivian",model:"R1S",year:2023,pax:7,length:5.1,luggage:777,width:2.01,height:1.86,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Polo",year:2018,pax:5,length:4.05,luggage:351,width:1.75,height:1.45,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"Polo",year:2023,pax:5,length:4.07,luggage:351,width:1.75,height:1.46,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"Golf",year:2020,pax:5,length:4.28,luggage:381,width:1.79,height:1.45,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"Golf",year:2023,pax:5,length:4.28,luggage:381,width:1.79,height:1.46,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"Vento",year:2023,pax:5,length:4.48,luggage:460,width:1.73,height:1.47,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"Jetta",year:2019,pax:5,length:4.7,luggage:510,width:1.8,height:1.45,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"Jetta",year:2023,pax:5,length:4.7,luggage:510,width:1.8,height:1.46,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"Passat",year:2023,pax:5,length:4.77,luggage:586,width:1.83,height:1.46,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"T-Roc",year:2023,pax:5,length:4.23,luggage:445,width:1.82,height:1.57,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Taigo",year:2023,pax:5,length:4.27,luggage:440,width:1.76,height:1.52,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Tiguan",year:2023,pax:5,length:4.51,luggage:615,width:1.84,height:1.67,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Tiguan",year:2024,pax:7,length:4.54,luggage:652,width:1.84,height:1.66,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Touareg",year:2023,pax:5,length:4.88,luggage:810,width:1.98,height:1.73,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Touareg R",year:2023,pax:5,length:4.88,luggage:810,width:1.98,height:1.73,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Amarok",year:2023,pax:5,length:5.35,luggage:0,width:1.95,height:1.84,body:"Pickup",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Multivan",year:2023,pax:7,length:4.97,luggage:1000,width:1.94,height:1.94,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"ID.3",year:2023,pax:5,length:4.26,luggage:385,width:1.81,height:1.56,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volkswagen",model:"ID.4",year:2023,pax:5,length:4.58,luggage:543,width:1.85,height:1.64,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"ID.6",year:2023,pax:7,length:4.88,luggage:411,width:1.85,height:1.68,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Kwid",year:2023,pax:5,length:3.68,luggage:290,width:1.58,height:1.52,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Renault",model:"Clio",year:2019,pax:5,length:4.06,luggage:391,width:1.8,height:1.44,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Renault",model:"Clio",year:2023,pax:5,length:4.05,luggage:391,width:1.8,height:1.44,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Renault",model:"Megane",year:2023,pax:5,length:4.36,luggage:434,width:1.87,height:1.44,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Renault",model:"Megane E-Tech",year:2023,pax:5,length:4.2,luggage:440,width:1.77,height:1.5,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Sandero",year:2021,pax:5,length:4.09,luggage:328,width:1.74,height:1.53,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Renault",model:"Sandero",year:2023,pax:5,length:4.09,luggage:328,width:1.74,height:1.53,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Renault",model:"Logan",year:2023,pax:5,length:4.36,luggage:510,width:1.73,height:1.51,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Renault",model:"Captur",year:2023,pax:5,length:4.23,luggage:422,width:1.8,height:1.58,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Arkana",year:2023,pax:5,length:4.57,luggage:513,width:1.82,height:1.57,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Duster",year:2018,pax:5,length:4.34,luggage:406,width:1.82,height:1.69,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Duster",year:2023,pax:5,length:4.39,luggage:438,width:1.82,height:1.69,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Koleos",year:2023,pax:5,length:4.67,luggage:458,width:1.84,height:1.67,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Austral",year:2023,pax:5,length:4.51,luggage:575,width:1.83,height:1.62,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Kangoo",year:2023,pax:5,length:4.49,luggage:900,width:1.92,height:1.81,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Trafic",year:2023,pax:9,length:4.99,luggage:5200,width:1.96,height:1.97,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Renault",model:"Master",year:2023,pax:3,length:5.55,luggage:8000,width:2.07,height:2.31,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Peugeot",model:"208",year:2023,pax:5,length:4.06,luggage:311,width:1.75,height:1.43,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Peugeot",model:"308",year:2023,pax:5,length:4.36,luggage:412,width:1.85,height:1.44,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Peugeot",model:"408",year:2023,pax:5,length:4.69,luggage:536,width:1.86,height:1.48,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Peugeot",model:"2008",year:2023,pax:5,length:4.3,luggage:434,width:1.77,height:1.55,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Peugeot",model:"3008",year:2023,pax:5,length:4.45,luggage:520,width:1.84,height:1.62,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Peugeot",model:"5008",year:2023,pax:7,length:4.64,luggage:702,width:1.84,height:1.65,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Peugeot",model:"Landtrek",year:2023,pax:5,length:5.35,luggage:0,width:1.87,height:1.84,body:"Pickup",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Peugeot",model:"Boxer",year:2023,pax:3,length:5.41,luggage:8000,width:2.05,height:2.52,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Citroen",model:"C3",year:2023,pax:5,length:4.0,luggage:316,width:1.75,height:1.49,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Citroen",model:"C3 Aircross",year:2023,pax:7,length:4.15,luggage:410,width:1.76,height:1.65,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Citroen",model:"C5 Aircross",year:2023,pax:5,length:4.5,luggage:580,width:1.84,height:1.67,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Citroen",model:"Berlingo",year:2023,pax:5,length:4.4,luggage:775,width:1.85,height:1.84,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Citroen",model:"Jumpy",year:2023,pax:9,length:4.96,luggage:5500,width:2.01,height:1.9,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Dacia",model:"Sandero",year:2023,pax:5,length:4.09,luggage:328,width:1.74,height:1.53,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Dacia",model:"Duster",year:2023,pax:5,length:4.39,luggage:438,width:1.82,height:1.69,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Dacia",model:"Jogger",year:2023,pax:7,length:4.55,luggage:501,width:1.78,height:1.63,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Dacia",model:"Spring",year:2023,pax:5,length:3.73,luggage:290,width:1.62,height:1.52,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"SEAT",model:"Ibiza",year:2023,pax:5,length:4.06,luggage:355,width:1.75,height:1.44,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"SEAT",model:"Leon",year:2023,pax:5,length:4.36,luggage:380,width:1.8,height:1.45,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"SEAT",model:"Arona",year:2023,pax:5,length:4.14,luggage:400,width:1.78,height:1.55,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"SEAT",model:"Ateca",year:2023,pax:5,length:4.37,luggage:485,width:1.84,height:1.61,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Skoda",model:"Fabia",year:2023,pax:5,length:4.11,luggage:380,width:1.78,height:1.47,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Skoda",model:"Octavia",year:2023,pax:5,length:4.69,luggage:600,width:1.83,height:1.47,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Skoda",model:"Kamiq",year:2023,pax:5,length:4.24,luggage:400,width:1.79,height:1.59,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Skoda",model:"Karoq",year:2023,pax:5,length:4.38,luggage:521,width:1.84,height:1.61,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Skoda",model:"Kodiaq",year:2023,pax:7,length:4.7,luggage:630,width:1.88,height:1.68,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Cupra",model:"Formentor",year:2023,pax:5,length:4.45,luggage:420,width:1.84,height:1.51,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Cupra",model:"Born",year:2023,pax:5,length:4.32,luggage:385,width:1.81,height:1.54,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Opel",model:"Corsa",year:2023,pax:5,length:4.06,luggage:309,width:1.77,height:1.43,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Opel",model:"Astra",year:2023,pax:5,length:4.37,luggage:422,width:1.86,height:1.47,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Opel",model:"Mokka",year:2023,pax:5,length:4.15,luggage:350,width:1.79,height:1.53,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Opel",model:"Crossland",year:2023,pax:5,length:4.21,luggage:410,width:1.77,height:1.6,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Opel",model:"Grandland",year:2023,pax:5,length:4.48,luggage:514,width:1.9,height:1.63,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"DS",model:"DS3",year:2023,pax:5,length:4.12,luggage:350,width:1.79,height:1.53,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"DS",model:"DS7",year:2023,pax:5,length:4.57,luggage:555,width:1.9,height:1.62,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Fiat",model:"500",year:2023,pax:4,length:3.55,luggage:185,width:1.63,height:1.49,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Fiat",model:"Argo",year:2023,pax:5,length:4.07,luggage:300,width:1.75,height:1.51,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Fiat",model:"Cronos",year:2023,pax:5,length:4.49,luggage:525,width:1.79,height:1.48,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Fiat",model:"Pulse",year:2023,pax:5,length:4.09,luggage:370,width:1.75,height:1.58,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Fiat",model:"Fastback",year:2023,pax:5,length:4.38,luggage:516,width:1.8,height:1.52,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Fiat",model:"Ducato",year:2023,pax:3,length:5.41,luggage:8000,width:2.05,height:2.52,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Fiat",model:"Scudo",year:2023,pax:9,length:4.96,luggage:5500,width:2.01,height:1.9,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Alfa Romeo",model:"Tonale",year:2023,pax:5,length:4.53,luggage:500,width:1.84,height:1.6,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Alfa Romeo",model:"Stelvio",year:2023,pax:5,length:4.69,luggage:525,width:1.9,height:1.65,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Alfa Romeo",model:"Giulia",year:2023,pax:5,length:4.64,luggage:480,width:1.87,height:1.43,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"BMW",model:"Serie 1",year:2023,pax:5,length:4.36,luggage:380,width:1.8,height:1.44,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"BMW",model:"Serie 2",year:2023,pax:4,length:4.52,luggage:390,width:1.84,height:1.39,body:"Coupe",origin:"Europea",vehicleType:"Auto"},
+  {brand:"BMW",model:"Serie 3",year:2023,pax:5,length:4.71,luggage:480,width:1.83,height:1.44,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"BMW",model:"Serie 5",year:2023,pax:5,length:4.96,luggage:530,width:1.9,height:1.47,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"BMW",model:"Serie 7",year:2023,pax:5,length:5.39,luggage:500,width:1.95,height:1.49,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"BMW",model:"X1",year:2023,pax:5,length:4.5,luggage:540,width:1.84,height:1.64,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"X2",year:2023,pax:5,length:4.37,luggage:470,width:1.82,height:1.52,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"X3",year:2023,pax:5,length:4.71,luggage:550,width:1.89,height:1.68,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"X4",year:2023,pax:5,length:4.75,luggage:525,width:1.92,height:1.62,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"X5",year:2023,pax:5,length:4.92,luggage:650,width:2.0,height:1.75,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"X6",year:2023,pax:5,length:4.93,luggage:580,width:2.0,height:1.7,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"X7",year:2023,pax:7,length:5.15,luggage:750,width:2.0,height:1.8,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"iX",year:2023,pax:5,length:4.95,luggage:500,width:1.97,height:1.7,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"BMW",model:"i4",year:2023,pax:5,length:4.78,luggage:470,width:1.85,height:1.45,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"MINI",model:"Cooper",year:2023,pax:4,length:3.82,luggage:211,width:1.73,height:1.43,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"MINI",model:"Countryman",year:2023,pax:5,length:4.3,luggage:450,width:1.82,height:1.57,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"MINI",model:"Countryman",year:2024,pax:5,length:4.43,luggage:460,width:1.84,height:1.66,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"Clase A",year:2023,pax:5,length:4.42,luggage:370,width:1.8,height:1.43,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Mercedes-Benz",model:"Clase C",year:2022,pax:5,length:4.75,luggage:455,width:1.82,height:1.44,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Mercedes-Benz",model:"Clase C",year:2023,pax:5,length:4.75,luggage:455,width:1.82,height:1.44,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Mercedes-Benz",model:"Clase E",year:2023,pax:5,length:4.95,luggage:540,width:1.85,height:1.47,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Mercedes-Benz",model:"Clase S",year:2023,pax:5,length:5.18,luggage:550,width:1.95,height:1.5,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Mercedes-Benz",model:"GLA",year:2023,pax:5,length:4.41,luggage:421,width:1.83,height:1.61,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"GLB",year:2023,pax:7,length:4.63,luggage:570,width:1.83,height:1.66,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"GLC",year:2023,pax:5,length:4.72,luggage:620,width:1.89,height:1.64,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"GLE",year:2023,pax:5,length:4.92,luggage:825,width:1.94,height:1.8,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"GLS",year:2023,pax:7,length:5.21,luggage:680,width:1.96,height:1.83,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"G 63 AMG",year:2023,pax:5,length:4.65,luggage:650,width:1.98,height:1.97,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"Sprinter",year:2023,pax:3,length:5.93,luggage:9000,width:2.35,height:2.9,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"Vito",year:2023,pax:9,length:5.14,luggage:6000,width:1.93,height:1.94,body:"Van",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"EQA",year:2023,pax:5,length:4.46,luggage:340,width:1.83,height:1.62,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"EQB",year:2023,pax:7,length:4.68,luggage:465,width:1.83,height:1.67,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Mercedes-Benz",model:"EQC",year:2023,pax:5,length:4.76,luggage:500,width:1.88,height:1.62,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Audi",model:"A3",year:2023,pax:5,length:4.34,luggage:380,width:1.82,height:1.43,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Audi",model:"A4",year:2023,pax:5,length:4.73,luggage:480,width:1.84,height:1.41,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Audi",model:"A6",year:2023,pax:5,length:4.94,luggage:530,width:1.89,height:1.45,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Audi",model:"Q3",year:2023,pax:5,length:4.48,luggage:530,width:1.84,height:1.61,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Audi",model:"Q5",year:2023,pax:5,length:4.67,luggage:550,width:1.89,height:1.66,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Audi",model:"Q7",year:2023,pax:7,length:5.07,luggage:770,width:1.97,height:1.74,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Audi",model:"Q8",year:2023,pax:5,length:5.0,luggage:605,width:1.99,height:1.7,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Audi",model:"e-tron",year:2023,pax:5,length:4.9,luggage:660,width:1.94,height:1.63,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Audi",model:"Q4 e-tron",year:2023,pax:5,length:4.59,luggage:520,width:1.87,height:1.61,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Porsche",model:"Macan",year:2023,pax:5,length:4.68,luggage:488,width:1.93,height:1.62,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Porsche",model:"Macan",year:2024,pax:5,length:4.78,luggage:540,width:1.94,height:1.62,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Porsche",model:"Cayenne",year:2023,pax:5,length:4.92,luggage:770,width:1.98,height:1.7,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Porsche",model:"Taycan",year:2023,pax:4,length:4.96,luggage:407,width:1.97,height:1.38,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Porsche",model:"Panamera",year:2023,pax:4,length:5.05,luggage:495,width:1.94,height:1.42,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volvo",model:"XC40",year:2023,pax:5,length:4.43,luggage:460,width:1.86,height:1.65,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volvo",model:"XC60",year:2023,pax:5,length:4.69,luggage:505,width:1.9,height:1.66,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volvo",model:"XC90",year:2023,pax:7,length:4.95,luggage:721,width:2.0,height:1.78,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volvo",model:"S60",year:2023,pax:5,length:4.76,luggage:442,width:1.85,height:1.43,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volvo",model:"S90",year:2023,pax:5,length:4.97,luggage:500,width:1.88,height:1.44,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Volvo",model:"EX40",year:2024,pax:5,length:4.43,luggage:419,width:1.87,height:1.65,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volvo",model:"EX90",year:2024,pax:7,length:5.04,luggage:655,width:2.03,height:1.77,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Polestar",model:"Polestar 2",year:2023,pax:5,length:4.61,luggage:405,width:1.86,height:1.48,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Polestar",model:"Polestar 3",year:2023,pax:5,length:4.9,luggage:484,width:2.0,height:1.61,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Jaguar",model:"E-Pace",year:2023,pax:5,length:4.4,luggage:577,width:1.98,height:1.65,body:"SUV Compacto",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Jaguar",model:"F-Pace",year:2023,pax:5,length:4.73,luggage:650,width:1.94,height:1.66,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Jaguar",model:"XF",year:2023,pax:5,length:4.96,luggage:540,width:1.88,height:1.46,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+  {brand:"Land Rover",model:"Defender 90",year:2020,pax:5,length:4.32,luggage:397,width:2.0,height:1.97,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Defender 110",year:2020,pax:7,length:5.02,luggage:857,width:2.0,height:1.97,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Defender 110",year:2023,pax:7,length:5.02,luggage:857,width:2.01,height:1.97,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Discovery Sport",year:2023,pax:7,length:4.6,luggage:981,width:1.95,height:1.72,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Discovery",year:2023,pax:7,length:4.96,luggage:1137,width:2.07,height:1.89,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Range Rover Evoque",year:2023,pax:5,length:4.37,luggage:591,width:1.91,height:1.65,body:"SUV Mediano",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Range Rover Sport",year:2022,pax:5,length:4.88,luggage:780,width:2.0,height:1.8,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Range Rover Sport",year:2023,pax:7,length:4.96,luggage:780,width:2.05,height:1.82,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Land Rover",model:"Range Rover",year:2023,pax:5,length:5.05,luggage:818,width:2.0,height:1.87,body:"SUV Grande",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"CS15",year:2023,pax:5,length:4.14,luggage:360,width:1.79,height:1.59,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"CS35 Plus",year:2023,pax:5,length:4.32,luggage:430,width:1.78,height:1.58,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"CS55 Plus",year:2023,pax:5,length:4.52,luggage:504,width:1.84,height:1.62,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"CS75 Plus",year:2023,pax:5,length:4.7,luggage:595,width:1.87,height:1.74,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"CS85",year:2023,pax:5,length:4.71,luggage:520,width:1.87,height:1.52,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"Uni-V",year:2023,pax:5,length:4.66,luggage:360,width:1.87,height:1.49,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Changan",model:"Lamore",year:2023,pax:5,length:4.68,luggage:508,width:1.9,height:1.65,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"Glory 500",year:2023,pax:7,length:4.7,luggage:505,width:1.82,height:1.73,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"Glory 580",year:2023,pax:7,length:4.7,luggage:490,width:1.82,height:1.73,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"Glory ix5",year:2023,pax:5,length:4.44,luggage:432,width:1.82,height:1.69,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"C56",year:2023,pax:5,length:5.28,luggage:0,width:1.81,height:1.72,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JAC",model:"S2",year:2023,pax:5,length:4.15,luggage:400,width:1.77,height:1.62,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JAC",model:"S3",year:2023,pax:5,length:4.3,luggage:430,width:1.79,height:1.63,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JAC",model:"S4",year:2023,pax:5,length:4.5,luggage:470,width:1.84,height:1.65,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JAC",model:"JS3 Pro",year:2023,pax:5,length:4.32,luggage:405,width:1.82,height:1.64,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JAC",model:"e-JS4",year:2023,pax:5,length:4.47,luggage:400,width:1.82,height:1.65,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JAC",model:"T6",year:2023,pax:5,length:5.25,luggage:0,width:1.85,height:1.8,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Jetour",model:"X70",year:2023,pax:7,length:4.69,luggage:560,width:1.83,height:1.73,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Jetour",model:"X90",year:2023,pax:7,length:4.74,luggage:600,width:1.86,height:1.78,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Jetour",model:"Dashing",year:2023,pax:5,length:4.5,luggage:485,width:1.84,height:1.58,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chery",model:"QQ",year:2023,pax:5,length:3.56,luggage:170,width:1.56,height:1.48,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Chery",model:"Arrizo 6",year:2023,pax:5,length:4.7,luggage:506,width:1.82,height:1.47,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Chery",model:"Tiggo 2",year:2023,pax:5,length:4.26,luggage:355,width:1.78,height:1.64,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chery",model:"Tiggo 4 Pro",year:2023,pax:5,length:4.35,luggage:411,width:1.82,height:1.7,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chery",model:"Tiggo 7 Pro",year:2023,pax:5,length:4.6,luggage:530,width:1.87,height:1.72,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chery",model:"Tiggo 8 Pro",year:2023,pax:7,length:4.72,luggage:617,width:1.86,height:1.74,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chery",model:"Tiggo 9",year:2023,pax:7,length:4.96,luggage:750,width:1.93,height:1.76,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Geely",model:"Emgrand",year:2023,pax:5,length:4.64,luggage:450,width:1.8,height:1.46,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Geely",model:"Coolray",year:2023,pax:5,length:4.33,luggage:430,width:1.8,height:1.57,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Geely",model:"Okavango",year:2023,pax:7,length:4.71,luggage:560,width:1.89,height:1.74,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Geely",model:"Azkarra",year:2023,pax:5,length:4.52,luggage:405,width:1.82,height:1.62,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Geely",model:"Preface",year:2023,pax:5,length:4.76,luggage:460,width:1.87,height:1.47,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Geely",model:"Galaxy L7",year:2023,pax:5,length:4.77,luggage:550,width:1.9,height:1.67,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"MG",model:"3",year:2023,pax:5,length:4.07,luggage:285,width:1.72,height:1.51,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"MG",model:"5",year:2023,pax:5,length:4.67,luggage:400,width:1.84,height:1.5,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"MG",model:"ZS",year:2023,pax:5,length:4.31,luggage:448,width:1.8,height:1.65,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"MG",model:"RX5",year:2023,pax:5,length:4.58,luggage:536,width:1.87,height:1.69,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"MG",model:"HS",year:2023,pax:5,length:4.71,luggage:558,width:1.88,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"MG",model:"RX8",year:2023,pax:7,length:4.93,luggage:600,width:1.92,height:1.78,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"MG",model:"VS Plus",year:2023,pax:7,length:4.72,luggage:560,width:1.86,height:1.75,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"MG",model:"4 EV",year:2023,pax:5,length:4.29,luggage:363,width:1.84,height:1.51,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Haval",model:"H2",year:2023,pax:5,length:4.32,luggage:400,width:1.81,height:1.68,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Haval",model:"H4",year:2023,pax:5,length:4.45,luggage:490,width:1.84,height:1.65,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Haval",model:"H6",year:2021,pax:5,length:4.65,luggage:561,width:1.87,height:1.73,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Haval",model:"H6",year:2023,pax:5,length:4.65,luggage:561,width:1.89,height:1.74,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Haval",model:"H9",year:2023,pax:7,length:4.89,luggage:810,width:1.93,height:1.88,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Haval",model:"Dargo",year:2023,pax:5,length:4.73,luggage:540,width:1.91,height:1.77,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Haval",model:"Big Dog",year:2023,pax:5,length:4.7,luggage:600,width:1.91,height:1.82,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"BYD",model:"Seagull",year:2023,pax:5,length:3.78,luggage:293,width:1.72,height:1.54,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"BYD",model:"Dolphin",year:2023,pax:5,length:4.29,luggage:345,width:1.77,height:1.57,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"BYD",model:"Seal",year:2023,pax:5,length:4.8,luggage:400,width:1.87,height:1.46,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"BYD",model:"Song Plus",year:2023,pax:5,length:4.7,luggage:523,width:1.89,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"BYD",model:"Yuan Plus",year:2023,pax:5,length:4.46,luggage:440,width:1.87,height:1.62,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"BYD",model:"Tang",year:2023,pax:7,length:4.87,luggage:235,width:1.95,height:1.73,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"BYD",model:"Han",year:2023,pax:5,length:4.98,luggage:410,width:1.91,height:1.5,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"BYD",model:"Sea Lion 6",year:2023,pax:5,length:4.75,luggage:504,width:1.89,height:1.67,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"BYD",model:"Shark",year:2024,pax:5,length:5.45,luggage:0,width:1.99,height:1.85,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"GAC",model:"GS4",year:2023,pax:5,length:4.45,luggage:410,width:1.84,height:1.68,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"GAC",model:"GS8",year:2023,pax:7,length:4.87,luggage:700,width:1.92,height:1.75,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"GAC",model:"GM6",year:2023,pax:7,length:4.9,luggage:680,width:1.9,height:1.81,body:"Van",origin:"China",vehicleType:"Camioneta"},
+  {brand:"GAC",model:"Aion S",year:2023,pax:5,length:4.88,luggage:415,width:1.87,height:1.5,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"GAC",model:"Aion Y",year:2023,pax:5,length:4.41,luggage:411,width:1.82,height:1.62,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"GAC",model:"Aion LX",year:2023,pax:5,length:4.78,luggage:631,width:1.95,height:1.67,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Foton",model:"Tunland G7",year:2023,pax:5,length:5.43,luggage:0,width:1.92,height:1.84,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Foton",model:"Tunland E3",year:2023,pax:5,length:5.3,luggage:0,width:1.87,height:1.82,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Foton",model:"View Traveller",year:2023,pax:11,length:5.99,luggage:1500,width:2.06,height:2.22,body:"Van",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JMC",model:"Vigus 5",year:2023,pax:5,length:5.32,luggage:0,width:1.87,height:1.78,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JMC",model:"Vigus 7",year:2023,pax:5,length:5.42,luggage:0,width:1.9,height:1.8,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"JMC",model:"Boarding",year:2023,pax:7,length:4.88,luggage:680,width:1.93,height:1.83,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Maxus",model:"T60",year:2023,pax:5,length:5.38,luggage:0,width:1.87,height:1.82,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Maxus",model:"T90",year:2023,pax:5,length:5.53,luggage:0,width:1.93,height:1.89,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Maxus",model:"D90",year:2023,pax:7,length:4.96,luggage:812,width:1.93,height:1.87,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Maxus",model:"G10",year:2023,pax:10,length:5.29,luggage:700,width:1.93,height:1.99,body:"Van",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Maxus",model:"Mifa 9",year:2023,pax:9,length:5.27,luggage:700,width:2.0,height:1.84,body:"Van",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Dongfeng",model:"Rich 6",year:2023,pax:5,length:5.43,luggage:0,width:1.88,height:1.79,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Dongfeng",model:"Fengxing T5 EVO",year:2023,pax:5,length:4.58,luggage:508,width:1.84,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Wuling",model:"Hongguang Mini EV",year:2023,pax:4,length:2.92,luggage:53,width:1.49,height:1.59,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Wuling",model:"Bingo",year:2023,pax:5,length:3.95,luggage:215,width:1.71,height:1.58,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Wuling",model:"Air EV",year:2023,pax:4,length:3.92,luggage:215,width:1.71,height:1.6,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Jinbei",model:"Haise",year:2023,pax:11,length:5.5,luggage:1500,width:1.88,height:2.02,body:"Van",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Baojun",model:"530",year:2023,pax:7,length:4.65,luggage:568,width:1.83,height:1.71,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Baojun",model:"Yep",year:2023,pax:5,length:3.38,luggage:200,width:1.62,height:1.64,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Xpeng",model:"P7",year:2023,pax:5,length:4.89,luggage:440,width:1.9,height:1.44,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Xpeng",model:"G9",year:2023,pax:5,length:4.89,luggage:660,width:1.97,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Xpeng",model:"G6",year:2023,pax:5,length:4.75,luggage:571,width:1.92,height:1.65,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Nio",model:"ET5",year:2023,pax:5,length:4.79,luggage:386,width:1.96,height:1.5,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Nio",model:"EL7",year:2023,pax:5,length:4.91,luggage:702,width:1.97,height:1.72,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Nio",model:"ET7",year:2023,pax:5,length:5.1,luggage:363,width:1.99,height:1.51,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Li Auto",model:"L9",year:2023,pax:6,length:5.22,luggage:1019,width:1.96,height:1.8,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Li Auto",model:"L8",year:2023,pax:6,length:5.09,luggage:995,width:1.96,height:1.8,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Li Auto",model:"L6",year:2024,pax:5,length:4.92,luggage:753,width:1.96,height:1.8,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Tank",model:"300",year:2023,pax:5,length:4.76,luggage:615,width:1.94,height:1.9,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Tank",model:"500",year:2023,pax:7,length:5.04,luggage:780,width:1.94,height:1.92,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Ora",model:"Good Cat",year:2023,pax:5,length:4.24,luggage:228,width:1.83,height:1.61,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Ora",model:"Ballet Cat",year:2023,pax:5,length:4.37,luggage:326,width:1.83,height:1.61,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Lynk & Co",model:"01",year:2023,pax:5,length:4.51,luggage:406,width:1.86,height:1.68,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Lynk & Co",model:"05",year:2023,pax:5,length:4.52,luggage:460,width:1.86,height:1.6,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Lynk & Co",model:"09",year:2023,pax:7,length:5.05,luggage:806,width:1.99,height:1.77,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Zeekr",model:"001",year:2023,pax:5,length:4.97,luggage:402,width:1.99,height:1.48,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Zeekr",model:"X",year:2023,pax:5,length:4.45,luggage:362,width:1.84,height:1.57,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Deepal",model:"S7",year:2023,pax:5,length:4.75,luggage:560,width:1.93,height:1.65,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Deepal",model:"L7",year:2023,pax:5,length:4.77,luggage:550,width:1.9,height:1.67,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Jaecoo",model:"J7",year:2023,pax:5,length:4.47,luggage:485,width:1.86,height:1.65,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Omoda",model:"5",year:2023,pax:5,length:4.41,luggage:390,width:1.82,height:1.6,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Omoda",model:"E5",year:2023,pax:5,length:4.41,luggage:360,width:1.82,height:1.6,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Brilliance",model:"V5",year:2023,pax:7,length:4.62,luggage:586,width:1.83,height:1.72,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Soueast",model:"DX3",year:2023,pax:5,length:4.36,luggage:430,width:1.81,height:1.68,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Soueast",model:"DX7",year:2023,pax:7,length:4.69,luggage:580,width:1.85,height:1.73,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Shineray",model:"X30L",year:2023,pax:7,length:4.55,luggage:580,width:1.79,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Shineray",model:"T30",year:2023,pax:5,length:5.05,luggage:0,width:1.8,height:1.72,body:"Pickup",origin:"China",vehicleType:"Camioneta"},
+  // ── DESDE EXCEL CCC ──
+{brand:"Brilliance",model:"V3",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Byd",model:"F3",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Changan",model:"Alsvin",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Changan",model:"Honor",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"Cx70",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"X70",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Changan",model:"Van Turismo",year:2023,pax:9,length:5.0,luggage:1500,width:1.9,height:2.0,body:"Van",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Jac",model:"Refine",year:2023,pax:9,length:5.0,luggage:1500,width:1.9,height:2.0,body:"Van",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chery",model:"Arrizo 3",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Chery",model:"Arrizo 5",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Chery",model:"K60",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chery",model:"Tiggo 3",year:2023,pax:5,length:4.5,luggage:550,width:1.82,height:1.62,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"N300",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"N400",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Groove",year:2023,pax:5,length:4.5,luggage:550,width:1.82,height:1.62,body:"SUV Mediano",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"Chevrolet",model:"Joy",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Chevrolet",model:"Prisma",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Chevrolet",model:"Sail",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Americana",vehicleType:"Auto"},
+  {brand:"Chevrolet",model:"Spin",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"Americana",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"Glory 330",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"Glory 560",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"S500",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"SX5",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"DFSK",model:"SX6",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Geely",model:"GX3",year:2023,pax:4,length:4.0,luggage:300,width:1.72,height:1.55,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Great Wall",model:"M4",year:2023,pax:4,length:4.0,luggage:300,width:1.72,height:1.55,body:"SUV Compacto",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Great Wall",model:"Voleex C30",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Haval",model:"Jolion",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Honda",model:"WR-V",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Avante",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"H1",year:2023,pax:9,length:5.0,luggage:1500,width:1.9,height:2.0,body:"Van",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Creta",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Hyundai",model:"Verna",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"JAC",model:"JS8",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Jinbei",model:"Konect",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Cerato",year:2023,pax:5,length:4.5,luggage:550,width:1.82,height:1.62,body:"Sedan",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Kia",model:"Soluto",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Kia",model:"Sonet",year:2023,pax:4,length:4.0,luggage:300,width:1.72,height:1.55,body:"SUV Compacto",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Mazda",model:"CX-3",year:2023,pax:5,length:4.5,luggage:550,width:1.82,height:1.62,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"MG",model:"ZX",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"China",vehicleType:"Camioneta"},
+  {brand:"MG",model:"GT",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Mitsubishi",model:"Space Star",year:2023,pax:4,length:4.0,luggage:300,width:1.72,height:1.55,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Mitsubishi",model:"Xpander",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"X-Trail",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Nissan",model:"Tiida",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Shineray",model:"SWM X7",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"Shineray",model:"750Li",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"China",vehicleType:"Camioneta"},
+  {brand:"SsangYong",model:"Tivoli",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"SsangYong",model:"Stavic",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"Coreana",vehicleType:"Camioneta"},
+  {brand:"Subaru",model:"XV",year:2023,pax:5,length:4.5,luggage:550,width:1.82,height:1.62,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Aerio",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"APV",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Ertiga",year:2023,pax:5,length:4.65,luggage:700,width:1.84,height:1.7,body:"SUV Grande",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Suzuki",model:"Grand Nomade",year:2023,pax:5,length:4.7,luggage:700,width:1.86,height:1.7,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Agya",year:2023,pax:4,length:4.0,luggage:300,width:1.72,height:1.55,body:"SUV Compacto",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Toyota",model:"Etios",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Toyota",model:"Raize",year:2023,pax:5,length:4.5,luggage:550,width:1.82,height:1.62,body:"SUV Mediano",origin:"Japonesa",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Jetta",year:2023,pax:5,length:4.5,luggage:550,width:1.82,height:1.62,body:"Sedan",origin:"Europea",vehicleType:"Camioneta"},
+  {brand:"Volkswagen",model:"Virtus",year:2023,pax:4,length:4.2,luggage:380,width:1.72,height:1.48,body:"Sedan",origin:"Europea",vehicleType:"Auto"},
+
+  // ── MODELOS COMERCIALES PERÚ 2024-2025 ──────────────────────────
+
+  // TOYOTA faltantes
+  {brand:"Toyota",model:"Hiace Wagon",year:2024,pax:15,length:5.38,luggage:0,width:1.88,height:2.28,body:"Van",origin:"Japonesa",vehicleType:"Van"},
+  {brand:"Toyota",model:"Land Cruiser 70",year:2024,pax:3,length:4.64,luggage:0,width:1.79,height:1.87,body:"SUV Grande",origin:"Japonesa",vehicleType:"SUV"},
+  {brand:"Toyota",model:"Probox",year:2023,pax:5,length:4.20,luggage:860,width:1.69,height:1.52,body:"Station Wagon",origin:"Japonesa",vehicleType:"Auto"},
+
+  // HYUNDAI faltantes
+  {brand:"Hyundai",model:"Grand i10",year:2024,pax:5,length:3.97,luggage:256,width:1.68,height:1.50,body:"Hatchback",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"i30",year:2023,pax:5,length:4.34,luggage:395,width:1.80,height:1.47,body:"Hatchback",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Hyundai",model:"Starex",year:2023,pax:12,length:5.13,luggage:0,width:1.92,height:1.93,body:"Van",origin:"Coreana",vehicleType:"Van"},
+  {brand:"Hyundai",model:"Stargazer",year:2024,pax:7,length:4.72,luggage:292,width:1.81,height:1.71,body:"MPV",origin:"Coreana",vehicleType:"SUV"},
+
+  // KIA faltantes
+  {brand:"Kia",model:"Bongo",year:2023,pax:3,length:4.72,luggage:0,width:1.84,height:1.96,body:"Van",origin:"Coreana",vehicleType:"Van"},
+  {brand:"Kia",model:"Carens",year:2024,pax:7,length:4.54,luggage:216,width:1.82,height:1.65,body:"MPV",origin:"Coreana",vehicleType:"SUV"},
+  {brand:"Kia",model:"K3",year:2024,pax:5,length:4.50,luggage:502,width:1.80,height:1.45,body:"Sedan",origin:"Coreana",vehicleType:"Auto"},
+  {brand:"Kia",model:"Morning",year:2024,pax:5,length:3.60,luggage:255,width:1.60,height:1.50,body:"Hatchback",origin:"Coreana",vehicleType:"Auto"},
+
+  // NISSAN faltantes
+  {brand:"Nissan",model:"Note",year:2024,pax:5,length:4.05,luggage:332,width:1.73,height:1.52,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Nissan",model:"Terra",year:2024,pax:7,length:4.89,luggage:446,width:1.86,height:1.83,body:"SUV Grande",origin:"Japonesa",vehicleType:"SUV"},
+  {brand:"Nissan",model:"Qashqai",year:2024,pax:5,length:4.43,luggage:430,width:1.84,height:1.63,body:"SUV Compacto",origin:"Japonesa",vehicleType:"SUV"},
+
+  // HONDA faltantes
+  {brand:"Honda",model:"Jazz",year:2023,pax:5,length:4.04,luggage:304,width:1.74,height:1.53,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Honda",model:"Mobilio",year:2023,pax:7,length:4.39,luggage:151,width:1.68,height:1.62,body:"MPV",origin:"Japonesa",vehicleType:"Auto"},
+
+  // SUZUKI faltantes
+  {brand:"Suzuki",model:"Carry",year:2024,pax:5,length:3.84,luggage:0,width:1.60,height:1.81,body:"Van",origin:"Japonesa",vehicleType:"Van"},
+  {brand:"Suzuki",model:"Ignis",year:2024,pax:5,length:3.70,luggage:267,width:1.69,height:1.59,body:"Hatchback",origin:"Japonesa",vehicleType:"Auto"},
+  {brand:"Suzuki",model:"XL7",year:2024,pax:7,length:4.45,luggage:209,width:1.78,height:1.70,body:"SUV Grande",origin:"Japonesa",vehicleType:"SUV"},
+
+  // MITSUBISHI faltantes
+  {brand:"Mitsubishi",model:"Delica",year:2024,pax:8,length:4.80,luggage:430,width:1.80,height:1.87,body:"Van",origin:"Japonesa",vehicleType:"Van"},
+
+  // ISUZU
+  {brand:"Isuzu",model:"D-Max",year:2024,pax:5,length:5.28,luggage:0,width:1.86,height:1.78,body:"Pickup",origin:"Japonesa",vehicleType:"Pickup"},
+  {brand:"Isuzu",model:"MU-X",year:2024,pax:7,length:4.81,luggage:197,width:1.86,height:1.84,body:"SUV Grande",origin:"Japonesa",vehicleType:"SUV"},
+  {brand:"Isuzu",model:"Elf",year:2024,pax:3,length:5.98,luggage:0,width:1.90,height:2.23,body:"Van",origin:"Japonesa",vehicleType:"Van"},
+
+  // CHANGAN
+  {brand:"Changan",model:"Alsvin",year:2024,pax:5,length:4.38,luggage:430,width:1.76,height:1.49,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Changan",model:"CS15",year:2024,pax:5,length:4.15,luggage:394,width:1.76,height:1.62,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Changan",model:"CS35 Plus",year:2024,pax:5,length:4.49,luggage:360,width:1.84,height:1.65,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Changan",model:"CS55 Plus",year:2024,pax:5,length:4.59,luggage:460,width:1.86,height:1.68,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Changan",model:"CS75 Plus",year:2024,pax:5,length:4.70,luggage:504,width:1.90,height:1.72,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Changan",model:"Uni-K",year:2024,pax:5,length:4.80,luggage:605,width:1.96,height:1.76,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Changan",model:"Uni-T",year:2024,pax:5,length:4.46,luggage:390,width:1.86,height:1.66,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Changan",model:"Uni-V",year:2024,pax:5,length:4.66,luggage:420,width:1.90,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Changan",model:"Hunter",year:2024,pax:5,length:5.27,luggage:0,width:1.93,height:1.83,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+
+  // GEELY
+  {brand:"Geely",model:"Coolray",year:2024,pax:5,length:4.33,luggage:360,width:1.84,height:1.61,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Geely",model:"Azkarra",year:2024,pax:5,length:4.54,luggage:420,width:1.87,height:1.65,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Geely",model:"Okavango",year:2024,pax:7,length:4.71,luggage:228,width:1.90,height:1.76,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Geely",model:"Emgrand",year:2024,pax:5,length:4.64,luggage:450,width:1.80,height:1.47,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"Geely",model:"Xingyue L",year:2024,pax:5,length:4.79,luggage:611,width:1.90,height:1.67,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // BYD
+  {brand:"BYD",model:"Atto 3",year:2024,pax:5,length:4.46,luggage:440,width:1.88,height:1.62,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"BYD",model:"Seal",year:2024,pax:5,length:4.80,luggage:400,width:1.88,height:1.46,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"BYD",model:"Dolphin",year:2024,pax:5,length:4.15,luggage:345,width:1.77,height:1.57,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"BYD",model:"Han",year:2024,pax:5,length:4.99,luggage:410,width:1.91,height:1.49,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"BYD",model:"Tang",year:2024,pax:7,length:4.87,luggage:235,width:1.95,height:1.72,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"BYD",model:"Song Plus",year:2024,pax:5,length:4.71,luggage:550,width:1.89,height:1.70,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"BYD",model:"Song Pro",year:2024,pax:5,length:4.59,luggage:490,width:1.86,height:1.70,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"BYD",model:"Yuan Plus",year:2024,pax:5,length:4.46,luggage:440,width:1.88,height:1.62,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"BYD",model:"Shark",year:2024,pax:5,length:5.45,luggage:0,width:1.96,height:1.84,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+  {brand:"BYD",model:"King F3",year:2024,pax:5,length:4.65,luggage:480,width:1.79,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+
+  // DFSK
+  {brand:"DFSK",model:"Glory 330",year:2024,pax:5,length:4.39,luggage:366,width:1.78,height:1.52,body:"Sedan",origin:"China",vehicleType:"Auto"},
+  {brand:"DFSK",model:"Glory 360",year:2024,pax:5,length:4.31,luggage:360,width:1.80,height:1.62,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"DFSK",model:"Glory 500",year:2024,pax:5,length:4.66,luggage:430,width:1.85,height:1.70,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"DFSK",model:"Glory 580",year:2024,pax:7,length:4.72,luggage:250,width:1.85,height:1.72,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"DFSK",model:"K01H",year:2024,pax:2,length:3.64,luggage:0,width:1.58,height:1.96,body:"Van",origin:"China",vehicleType:"Van"},
+
+  // FOTON
+  {brand:"Foton",model:"Sauvana",year:2024,pax:7,length:4.89,luggage:310,width:1.90,height:1.78,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Foton",model:"Tunland G7",year:2024,pax:5,length:5.28,luggage:0,width:1.90,height:1.83,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+  {brand:"Foton",model:"View C2",year:2024,pax:14,length:5.99,luggage:0,width:1.99,height:2.54,body:"Van",origin:"China",vehicleType:"Van"},
+  {brand:"Foton",model:"Gratour T3",year:2024,pax:2,length:4.20,luggage:0,width:1.68,height:1.90,body:"Van",origin:"China",vehicleType:"Van"},
+
+  // WULING
+  {brand:"Wuling",model:"Air EV",year:2024,pax:4,length:3.92,luggage:227,width:1.71,height:1.60,body:"Hatchback",origin:"China",vehicleType:"Auto"},
+  {brand:"Wuling",model:"Almaz",year:2024,pax:7,length:4.78,luggage:247,width:1.84,height:1.76,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Wuling",model:"Cortez",year:2024,pax:7,length:4.72,luggage:228,width:1.81,height:1.76,body:"MPV",origin:"China",vehicleType:"SUV"},
+  {brand:"Wuling",model:"Confero",year:2024,pax:7,length:4.61,luggage:185,width:1.73,height:1.73,body:"MPV",origin:"China",vehicleType:"Auto"},
+
+  // JAC faltantes
+  {brand:"JAC",model:"S7",year:2024,pax:7,length:4.87,luggage:450,width:1.95,height:1.80,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"JAC",model:"T8 Pro",year:2024,pax:5,length:5.40,luggage:0,width:1.90,height:1.84,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+  {brand:"JAC",model:"JS4",year:2024,pax:5,length:4.47,luggage:490,width:1.87,height:1.67,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"JAC",model:"Sei4 Pro",year:2024,pax:5,length:4.68,luggage:506,width:1.86,height:1.48,body:"Sedan",origin:"China",vehicleType:"Auto"},
+
+  // CHERY faltantes
+  {brand:"Chery",model:"Tiggo 5X",year:2024,pax:5,length:4.38,luggage:475,width:1.84,height:1.68,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Chery",model:"Tiggo 8 Pro Max",year:2024,pax:7,length:4.72,luggage:295,width:1.90,height:1.74,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Chery",model:"Arrizo 8",year:2024,pax:5,length:4.78,luggage:520,width:1.87,height:1.49,body:"Sedan",origin:"China",vehicleType:"Auto"},
+
+  // HAVAL faltantes
+  {brand:"Haval",model:"H6 GT",year:2024,pax:5,length:4.65,luggage:571,width:1.89,height:1.60,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Haval",model:"Raptor",year:2024,pax:5,length:5.25,luggage:0,width:1.93,height:1.86,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+
+  // MG faltantes
+  {brand:"MG",model:"One",year:2024,pax:5,length:4.59,luggage:579,width:1.89,height:1.65,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"MG",model:"Extender",year:2024,pax:5,length:5.26,luggage:0,width:1.90,height:1.84,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+
+  // JETOUR
+  {brand:"Jetour",model:"X70",year:2024,pax:5,length:4.59,luggage:422,width:1.85,height:1.71,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Jetour",model:"X70 Plus",year:2024,pax:7,length:4.74,luggage:268,width:1.90,height:1.76,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Jetour",model:"X90",year:2024,pax:7,length:4.90,luggage:310,width:1.92,height:1.78,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Jetour",model:"Dashing",year:2024,pax:5,length:4.41,luggage:380,width:1.86,height:1.64,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Jetour",model:"T2",year:2024,pax:5,length:4.32,luggage:350,width:1.83,height:1.65,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+
+  // OMODA
+  {brand:"Omoda",model:"5",year:2024,pax:5,length:4.40,luggage:420,width:1.86,height:1.60,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Omoda",model:"7",year:2024,pax:5,length:4.63,luggage:490,width:1.90,height:1.64,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // JAECOO
+  {brand:"Jaecoo",model:"J7",year:2024,pax:5,length:4.52,luggage:400,width:1.90,height:1.68,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Jaecoo",model:"J8",year:2024,pax:5,length:4.69,luggage:460,width:1.92,height:1.74,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // DEEPAL
+  {brand:"Deepal",model:"S7",year:2024,pax:5,length:4.83,luggage:523,width:1.93,height:1.67,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Deepal",model:"L07",year:2024,pax:5,length:4.92,luggage:450,width:1.93,height:1.49,body:"Sedan",origin:"China",vehicleType:"Auto"},
+
+  // TANK
+  {brand:"Tank",model:"300",year:2024,pax:5,length:4.76,luggage:450,width:1.93,height:1.88,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"Tank",model:"500",year:2024,pax:5,length:5.15,luggage:579,width:2.00,height:1.90,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // MAXUS
+  {brand:"Maxus",model:"T60",year:2024,pax:5,length:5.35,luggage:0,width:1.90,height:1.82,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+  {brand:"Maxus",model:"G10",year:2024,pax:10,length:5.29,luggage:0,width:1.92,height:1.94,body:"Van",origin:"China",vehicleType:"Van"},
+  {brand:"Maxus",model:"D90",year:2024,pax:7,length:5.05,luggage:275,width:2.00,height:1.90,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // GAC
+  {brand:"GAC",model:"GS3",year:2024,pax:5,length:4.42,luggage:355,width:1.83,height:1.65,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"GAC",model:"GS4",year:2024,pax:5,length:4.55,luggage:390,width:1.86,height:1.70,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"GAC",model:"GS8",year:2024,pax:7,length:4.98,luggage:225,width:1.95,height:1.82,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+  {brand:"GAC",model:"Empow",year:2024,pax:5,length:4.74,luggage:450,width:1.88,height:1.49,body:"Sedan",origin:"China",vehicleType:"Auto"},
+
+  // SOUEAST
+  {brand:"Soueast",model:"DX3",year:2024,pax:5,length:4.32,luggage:390,width:1.81,height:1.63,body:"SUV Compacto",origin:"China",vehicleType:"SUV"},
+  {brand:"Soueast",model:"DX7",year:2024,pax:7,length:4.70,luggage:220,width:1.88,height:1.74,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // SHINERAY
+  {brand:"Shineray",model:"T30",year:2024,pax:5,length:5.24,luggage:0,width:1.77,height:1.73,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+  {brand:"Shineray",model:"X30L",year:2024,pax:7,length:4.66,luggage:200,width:1.78,height:1.78,body:"MPV",origin:"China",vehicleType:"Auto"},
+
+  // DONGFENG
+  {brand:"Dongfeng",model:"Rich 6",year:2024,pax:5,length:5.19,luggage:0,width:1.86,height:1.82,body:"Pickup",origin:"China",vehicleType:"Pickup"},
+  {brand:"Dongfeng",model:"AX7",year:2024,pax:5,length:4.66,luggage:476,width:1.90,height:1.72,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // JINBEI
+  {brand:"Jinbei",model:"SY6480",year:2024,pax:11,length:5.10,luggage:0,width:1.89,height:1.99,body:"Van",origin:"China",vehicleType:"Van"},
+  {brand:"Jinbei",model:"F50",year:2024,pax:7,length:4.96,luggage:280,width:1.84,height:1.78,body:"MPV",origin:"China",vehicleType:"Auto"},
+
+  // BAOJUN
+  {brand:"Baojun",model:"RS-7",year:2024,pax:5,length:4.63,luggage:490,width:1.88,height:1.64,body:"SUV Grande",origin:"China",vehicleType:"SUV"},
+
+  // KGM (ex SsangYong)
+  {brand:"KGM",model:"Torres",year:2024,pax:5,length:4.70,luggage:703,width:1.92,height:1.77,body:"SUV Grande",origin:"Coreana",vehicleType:"SUV"},
+  {brand:"KGM",model:"Musso",year:2024,pax:5,length:5.10,luggage:0,width:1.99,height:1.81,body:"Pickup",origin:"Coreana",vehicleType:"Pickup"},
+
+  // RAM faltantes
+  {brand:"Ram",model:"700",year:2024,pax:5,length:5.36,luggage:0,width:1.80,height:1.69,body:"Pickup",origin:"Americana",vehicleType:"Pickup"},
+
+  // FORD faltantes
+  {brand:"Ford",model:"Territory",year:2024,pax:5,length:4.56,luggage:490,width:1.83,height:1.69,body:"SUV Grande",origin:"Americana",vehicleType:"SUV"},
+  {brand:"Ford",model:"Everest",year:2024,pax:7,length:4.92,luggage:250,width:1.92,height:1.84,body:"SUV Grande",origin:"Americana",vehicleType:"SUV"},
+
+  // CHEVROLET faltantes
+  {brand:"Chevrolet",model:"Captiva",year:2024,pax:7,length:4.65,luggage:226,width:1.82,height:1.71,body:"SUV Grande",origin:"Americana",vehicleType:"SUV"},
+  {brand:"Chevrolet",model:"Montana",year:2024,pax:5,length:5.26,luggage:0,width:1.87,height:1.63,body:"Pickup",origin:"Americana",vehicleType:"Pickup"},
+
+  // RENAULT faltantes
+  {brand:"Renault",model:"Oroch",year:2024,pax:5,length:5.15,luggage:0,width:1.87,height:1.68,body:"Pickup",origin:"Europea",vehicleType:"Pickup"},
+  {brand:"Renault",model:"Stepway",year:2024,pax:5,length:4.09,luggage:292,width:1.75,height:1.60,body:"Hatchback",origin:"Europea",vehicleType:"Auto"},
+
+  // VOLKSWAGEN faltantes
+  {brand:"Volkswagen",model:"Teramont",year:2024,pax:7,length:5.00,luggage:369,width:1.99,height:1.78,body:"SUV Grande",origin:"Europea",vehicleType:"SUV"},
+  {brand:"Volkswagen",model:"Saveiro",year:2024,pax:2,length:4.97,luggage:0,width:1.73,height:1.55,body:"Pickup",origin:"Europea",vehicleType:"Pickup"},
+
+];
+
+// ── CLASIFICACIÓN ─────────────────────────────
+// ── PARÁMETROS ADMIN (cargados desde localStorage) ───────────────
+const DEFAULT_PARAMS = {
+  lite_pax_max:      3,   lite_lug_max:    450,  lite_len_max:    4.40,   // ≤3 pasajeros (sin conductor)
+  lite_maletas_min:  1,   lite_maletas_max: 2,
+  confort_pax_max:   3,   confort_lug_min: 451,  confort_lug_max: 650,   // ≤3 pasajeros
+  confort_len_min:   4.30, confort_len_max: 4.80,
+  confort_maletas_min: 2, confort_maletas_max: 3,
+  xl_pax_min:        4,   xl_pax_max:      5,    xl_lug_min:     651,    // 4-5 pasajeros
+  xl_lug_max:        900, xl_len_min:      4.60,
+  xl_maletas_min:    4,   xl_maletas_max:  5,
+  xlc_pax_min:       4,   xlc_pax_max:     5,    xlc_lug_min:    901,   // 4-5 pasajeros
+  xlc_len_min:       4.85,
+  xlc_maletas_min:   6,   xlc_maletas_max: 8,
+  van_pax_min:       7,                                                    // ≥7 pasajeros (sin conductor)
+  van_maletas_min:   8,   van_maletas_max: 15,
+};
+
+function getAdminParams() {
+  try {
+    const raw = localStorage.getItem('fleetiq_admin_params');
+    if (raw) return {...DEFAULT_PARAMS, ...JSON.parse(raw)};
+  } catch {}
+  return {...DEFAULT_PARAMS};
+}
+
+function P() { return getAdminParams(); }
+
+// Convierte litros a rango de maletas según categoría asignada
+function luggageToSuitcases(lug, cat) {
+  const p = P();
+  if (cat === 'VAN')       return p.van_maletas_min + '-' + p.van_maletas_max;
+  if (cat === 'XLCONFORT') return p.xlc_maletas_min + '-' + p.xlc_maletas_max;
+  if (cat === 'XL')        return p.xl_maletas_min  + '-' + p.xl_maletas_max;
+  if (cat === 'CONFORT')   return p.confort_maletas_min + '-' + p.confort_maletas_max;
+  return p.lite_maletas_min + '-' + p.lite_maletas_max;
+}
+
+function classifyCap(v) {
+  const p = P();
+  const pax = Math.max(0, (v.pax||0) - 1), len = v.length||0, lug = v.luggage||0; // pax excluye conductor
+  const body = (v.body||"").toLowerCase();
+  const isAuto = v.vehicleType === "Auto";
+
+  // VAN
+  if (pax >= p.van_pax_min || body === "van" || body === "minivan") return "VAN";
+
+  // LITE
+  if (isAuto && pax <= p.lite_pax_max && lug <= p.lite_lug_max && len <= p.lite_len_max) return "LITE";
+
+  // CONFORT
+  if (pax <= p.confort_pax_max && lug >= p.confort_lug_min && lug <= p.confort_lug_max && len >= p.confort_len_min && len <= p.confort_len_max) return "CONFORT";
+
+  // XL CONFORT
+  if (pax >= p.xlc_pax_min && pax <= p.xlc_pax_max && lug >= p.xlc_lug_min && len >= p.xlc_len_min) return "XLCONFORT";
+
+  // XL
+  if (pax >= p.xl_pax_min && pax <= p.xl_pax_max && lug >= p.xl_lug_min && lug <= p.xl_lug_max && len >= p.xl_len_min) return "XL";
+
+  // Fallback por carrocería
+  if (body === "pickup") return "XL";
+  if (body === "suv grande" && len >= p.xlc_len_min) return "XLCONFORT";
+  if (body === "suv grande") return "XL";
+  if (len > 4.80 && pax >= 5) return "XL";
+
+  if (isAuto) return "LITE";
+  return "CONFORT";
+}
+
+const CAT_DESC = {
+  LITE:      "Auto · Hasta 2 maletas grandes",
+  CONFORT:   "SUV Compacto · Hasta 3 maletas grandes",
+  XL:        "SUV Mediano/Grande · 4-5 maletas grandes",
+  XLCONFORT: "SUV Grande · 6-8 maletas grandes",
+  VAN:       "Van/Minivan · 8-15 maletas grandes",
+};
+const CAT_ICON = { LITE:"🚗", CONFORT:"🚙", XL:"🛻", XLCONFORT:"🚐", VAN:"🚌" };
+
+// ── STATE ─────────────────────────────────────
+let vehicles = [];
+let tblSort = "brand", tblSortDir = 1;
+
+function getDeletedVehicles() {
+  try { return JSON.parse(localStorage.getItem('fleetiq_deleted')||'[]'); } catch{ return []; }
+}
+
+function loadDB() {
+  const EXCEL_START = 497; // primer índice desde Excel CCC
+  let customEdits = {};
+  try { customEdits = JSON.parse(localStorage.getItem('fleetiq_vehicle_edits')||'{}'); } catch{}
+  const deleted = new Set(getDeletedVehicles());
+  let allVehicles = VEHICLES_DB.map((v,i)=>{
+    const src = i >= EXCEL_START ? 'Excel CCC' : 'Base interna';
+    const key = v.brand+'_'+v.model+'_'+v.year;
+    const edits = customEdits[key] || {};
+    const merged = {...v, ...edits};
+    return {...merged, cat:classifyCap(merged), id:i+1, source:src, _key:key};
+  }).filter(v => !deleted.has(v._key));
+
+  // Conservar solo el año más reciente por marca+modelo
+  const latestYear = {};
+  allVehicles.forEach(v => {
+    const mk = v.brand + '|' + v.model;
+    if (!latestYear[mk] || v.year > latestYear[mk]) latestYear[mk] = v.year;
+  });
+  vehicles = allVehicles.filter(v => v.year === latestYear[v.brand + '|' + v.model]);
+  renderTable();
+  renderStats();
+}
+
+async function init() {
+  loadDB();
+  // Cargar vehículos custom desde localStorage (compatible con cualquier navegador)
+  try {
+    const raw = localStorage.getItem('fleetiq_custom');
+    if (raw) {
+      const custom = JSON.parse(raw);
+      if (custom.length > 0) {
+        vehicles = [...vehicles, ...custom];
+        renderTable();
+        renderStats();
+      }
+    }
+  } catch {}
+}
+
+async function persist() {
+  // Guardar vehículos custom en localStorage (compatible con cualquier navegador)
+  try {
+    const custom = vehicles.filter(v => v.custom === true);
+    localStorage.setItem('fleetiq_custom', JSON.stringify(custom));
+  } catch {}
+}
+
+// ── PAGE NAVIGATION ───────────────────────────
+let _adminUnlocked = false;
+const ADMIN_PASS = '1234';
+
+function goPage(id, el) {
+  if (id === 'admin' && !_adminUnlocked) {
+    _pendingAdminEl = el;
+    document.getElementById('adminLoginModal').style.display = 'flex';
+    document.getElementById('adminPassInput').value = '';
+    document.getElementById('adminPassErr').style.display = 'none';
+    setTimeout(() => document.getElementById('adminPassInput').focus(), 80);
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('fabBtn').classList.toggle('fab-hidden', id !== 'tabla');
+  if (id === 'admin') loadAdminForm();
+}
+
+let _pendingAdminEl = null;
+function submitAdminLogin() {
+  const val = document.getElementById('adminPassInput').value;
+  if (val === ADMIN_PASS) {
+    _adminUnlocked = true;
+    document.getElementById('adminLoginModal').style.display = 'none';
+    if (_pendingAdminEl) goPage('admin', _pendingAdminEl);
+  } else {
+    document.getElementById('adminPassErr').style.display = 'block';
+    document.getElementById('adminPassInput').value = '';
+    document.getElementById('adminPassInput').focus();
+  }
+}
+function closeAdminLogin() {
+  document.getElementById('adminLoginModal').style.display = 'none';
+}
+
+// ── PAGE 1: BUSCAR ────────────────────────────
+function onBrandInput() {
+  const q = document.getElementById('q_brand').value.trim().toLowerCase();
+  const box = document.getElementById('sug-brand');
+  if (!q) { box.style.display='none'; return; }
+  const brands = [...new Set(vehicles.map(v=>v.brand))].filter(b=>b.toLowerCase().includes(q)).slice(0,8);
+  if (!brands.length) { box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = brands.map(b=>`<div class="sug-item" onmousedown="pickBrand('${b}')"><span class="sug-brand">${b}</span></div>`).join('');
+}
+
+function pickBrand(b) {
+  document.getElementById('q_brand').value = b;
+  document.getElementById('sug-brand').style.display='none';
+  document.getElementById('q_model').focus();
+  onModelInput();
+}
+
+function onModelInput() {
+  const brand = document.getElementById('q_brand').value.trim().toLowerCase();
+  const q = document.getElementById('q_model').value.trim().toLowerCase();
+  const box = document.getElementById('sug-model');
+  if (!q) { box.style.display='none'; return; }
+  const matches = vehicles.filter(v =>
+    v.model.toLowerCase().includes(q) &&
+    (!brand || v.brand.toLowerCase().includes(brand))
+  ).slice(0,8);
+  if (!matches.length) { box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = matches.map(v=>`<div class="sug-item" onmousedown="pickModel('${v.brand}','${v.model}')"><span class="sug-brand">${v.brand}</span><span class="sug-model">${v.model}</span></div>`).join('');
+}
+
+function pickModel(brand, model) {
+  document.getElementById('q_brand').value = brand;
+  document.getElementById('q_model').value = model;
+  document.getElementById('sug-model').style.display='none';
+}
+
+function hideSug(id, delay) {
+  setTimeout(()=>{ const el=document.getElementById(id); if(el) el.style.display='none'; }, delay);
+}
+
+function buscar() {
+  const brand = document.getElementById('q_brand').value.trim().toLowerCase();
+  const model = document.getElementById('q_model').value.trim().toLowerCase();
+  const area  = document.getElementById('resultArea');
+
+  if (!brand && !model) {
+    area.innerHTML = `<div class="no-result"><div class="nr-icon">💡</div>Ingresa al menos la marca o el modelo.</div>`;
+    return;
+  }
+
+  let results = vehicles.filter(v => {
+    const bMatch = !brand || v.brand.toLowerCase().includes(brand);
+    const mMatch = !model || v.model.toLowerCase().includes(model);
+    return bMatch && mMatch;
+  });
+
+  if (!results.length) {
+    area.innerHTML = `<div class="no-result"><div class="nr-icon">🔍</div>No se encontró ningún vehículo con esos datos.<br><br><span style="font-size:0.8rem;">Puedes agregarlo desde el <b>Catálogo</b>.</span></div>`;
+    return;
+  }
+
+  area.innerHTML = results.map(v => buildResultCard(v)).join('');
+}
+
+function buildResultCard(v) {
+  const isAuto = v.vehicleType === 'Auto';
+  const autoNote = isAuto
+    ? `<div style="font-size:0.75rem;color:#6b7280;margin-top:0.3rem;">Clasificado como <b>Auto</b> por ${v.brand}</div>`
+    : '';
+  const suitcases = luggageToSuitcases(v.luggage, v.cat);
+  const vid = v.brand + '_' + v.model + '_' + v.year;
+  const dirVal = (getDirectoData()[vid] || 'nd');
+  const dirLabel = dirVal === 'si' ? '✅ Admitida' : dirVal === 'no' ? '❌ No admitida' : '⬜ Sin definir';
+  const dirColor = dirVal === 'si' ? '#15803d' : dirVal === 'no' ? '#b91c1c' : '#6b7280';
+  const dirBg    = dirVal === 'si' ? '#dcfce7' : dirVal === 'no' ? '#fee2e2' : '#f3f4f6';
+  const catLabel = v.cat === 'XLCONFORT' ? 'XL CONFORT' : v.cat;
+
+  return `
+  <div class="result-card" style="margin-bottom:1rem;">
+    <div class="result-header">
+      <div class="rh-left">
+        <div style="font-size:0.68rem;color:#9ca3af;line-height:1.4;">${v.origin} ${v.origin==='China'?'🇨🇳':''}  <span style="color:#c4b5fd;font-size:0.62rem;">· ${v.source||'Base interna'}</span></div><div class="rh-brand">${v.brand}</div>
+        <div class="rh-model">${v.model}</div>
+        <div class="rh-year">${v.body} · ${v.origin}</div>
+      </div>
+      <div class="rh-badges">
+        <span class="badge ${v.cat}" style="font-size:0.9rem;padding:0.4rem 1.1rem;">${CAT_ICON[v.cat]} ${catLabel}</span>
+        ${autoNote}
+        <div style="margin-top:0.5rem;display:inline-block;background:${dirBg};color:${dirColor};font-weight:600;font-size:0.82rem;padding:0.3rem 0.9rem;border-radius:20px;">${dirLabel}</div>
+      </div>
+    </div>
+    <div class="result-specs">
+      <div class="spec-cell"><div class="sc-label">Pasajeros</div><div class="sc-val">${v.pax}</div></div>
+      <div class="spec-cell"><div class="sc-label">Longitud</div><div class="sc-val">${v.length} m</div></div>
+      <div class="spec-cell">
+        <div class="sc-label">Maletas grandes</div>
+        <div class="sc-val">${suitcases} 🧳</div>
+        <div style="font-size:0.68rem;color:#9ca3af;margin-top:2px;">${v.luggage>0?v.luggage+' L ref.':''}</div>
+      </div>
+      <div class="spec-cell"><div class="sc-label">Ancho</div><div class="sc-val">${v.width||'—'} m</div></div>
+      <div class="spec-cell"><div class="sc-label">Alto</div><div class="sc-val">${v.height||'—'} m</div></div>
+      <div class="spec-cell"><div class="sc-label">Tipo fabricante</div><div class="sc-val">${v.vehicleType==='Auto'?'🚗 Auto':'🛻 Camioneta'}</div></div>
+    </div>
+    <div class="result-footer" style="justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
+      <span class="rf-tag" style="color:#6b7280;">${v.custom ? '✏️ Agregado manualmente' : '📚 Base de datos FleetIQ'}</span>
+      <span class="rf-tag" style="color:#9ca3af;">📌 Datos de referencia · dimensiones pueden variar ±5cm entre años</span>
+    </div>
+  </div>`;
+}
+
+// ── PAGE 2: TABLA ─────────────────────────────
+function setSort(key) {
+  if (tblSort===key) tblSortDir *= -1;
+  else { tblSort=key; tblSortDir=1; }
+  renderTable();
+}
+
+function renderTable() {
+  const q      = (document.getElementById('tblSearch')?.value||'').toLowerCase();
+  const fCat   = document.getElementById('fCat')?.value||'';
+  const fVtype = document.getElementById('fVtype')?.value||'';
+  const fOrig  = document.getElementById('fOrigin')?.value||'';
+
+  let rows = vehicles.filter(v => {
+    if (fCat   && v.cat!==fCat) return false;
+    if (fVtype && v.vehicleType!==fVtype) return false;
+    if (fOrig  && v.origin!==fOrig) return false;
+    if (q && !(v.brand+' '+v.model).toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  // ── Filtro por columna numérica ──
+  const fColKey = document.getElementById('fColKey')?.value || '';
+  const fColOp  = document.getElementById('fColOp')?.value  || 'gte';
+  const fColVal = parseFloat(document.getElementById('fColVal')?.value);
+  if (fColKey && !isNaN(fColVal)) {
+    rows = rows.filter(v => {
+      const val = parseFloat(v[fColKey]) || 0;
+      if (fColOp === 'gte') return val >= fColVal;
+      if (fColOp === 'lte') return val <= fColVal;
+      if (fColOp === 'eq')  return Math.abs(val - fColVal) < 0.001;
+      return true;
+    });
+  }
+
+  // ── Filtro por criterios de admisión guardados ──
+  const criterios = getCriterios();
+  if (criterios.length) {
+    rows = rows.filter(v => {
+      return criterios.every(cr => {
+        const val = parseFloat(v[cr.col]) || 0;
+        if (cr.op === 'gte') return val >= cr.val;
+        if (cr.op === 'lte') return val <= cr.val;
+        if (cr.op === 'eq')  return Math.abs(val - cr.val) < 0.001;
+        return true;
+      });
+    });
+  }
+
+  rows = [...rows].sort((a,b)=>{
+    let av = a[tblSort]||'', bv = b[tblSort]||'';
+    if (typeof av==='string') return av.localeCompare(bv)*tblSortDir;
+    return (av-bv)*tblSortDir;
+  });
+
+  const tbody = document.getElementById('tblBody');
+  document.getElementById('tblMeta').textContent = rows.length + ' de ' + vehicles.length + ' vehículos';
+  // Actualizar badge de criterios
+  const _crs = getCriterios();
+  const badge = document.getElementById('criterios-badge');
+  const hint  = document.getElementById('criterios-active-hint');
+  if (_crs.length) {
+    badge.textContent = _crs.length; badge.style.display = 'inline';
+    hint.textContent = '⚠ ' + _crs.length + ' criterio(s) activo(s) — filtrando catálogo';
+  } else {
+    badge.style.display = 'none'; hint.textContent = '';
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="14" class="table-empty">No hay vehículos con estos filtros.</td></tr>`;
+    return;
+  }
+
+  // Cargar estados directo
+  const directoData = getDirectoData();
+
+  tbody.innerHTML = rows.map(v => {
+    const vid = v.brand + '_' + v.model + '_' + v.year;
+    const dirVal = directoData[vid] || 'nd';
+    const dirLabel = dirVal === 'si' ? 'Sí' : dirVal === 'no' ? 'No' : 'N/D';
+    const catLabel = v.cat === 'XLCONFORT' ? 'XL CONFORT' : v.cat;
+    return `<tr>
+      <td class="td-brand"><span class="td-origen-label">${v.origin} ${v.origin==='China'?'🇨🇳':''}</span>${v.brand}<span style="display:block;font-size:0.62rem;color:#c4b5fd;margin-top:1px;">${v.source||''}</span></td>
+      <td class="td-model">${v.model}</td>
+      <td class="td-num">${v.year}</td>
+      <td><span class="rb ${v.cat}">${CAT_ICON[v.cat]} ${catLabel}</span></td>
+      <td><span class="rb ${v.vehicleType==='Auto'?'auto-r':'cam-r'}">${v.vehicleType==='Auto'?'🚗':'🛻'} ${v.vehicleType}</span></td>
+      <td class="td-num">${Math.max(0,v.pax-1)}</td>
+      <td class="td-num">${v.length} m</td>
+      <td class="td-num">${luggageToSuitcases(v.luggage,v.cat)} 🧳<br><span style="font-size:0.68rem;color:#9ca3af;">${v.luggage>0?v.luggage+' L':''}</span></td>
+      <td class="td-num">${v.width||'—'} m</td>
+      <td class="td-num">${v.height||'—'} m</td>
+      <td class="td-body">${v.body}</td>
+      <td><span class="origin-dot ${v.origin}"></span>${v.origin}</td>
+      <td style="text-align:center;"><select class="sel-directo ${dirVal}" onchange="setDirecto('${vid}',this)"><option value="nd" ${dirVal==='nd'?'selected':''}>N/D</option><option value="si" ${dirVal==='si'?'selected':''}>Sí</option><option value="no" ${dirVal==='no'?'selected':''}>No</option></select></td>
+      <td style="text-align:center;"><button class="del-row-btn" onclick="deleteVehicle('${vid}',${v.id})" title="Eliminar vehículo">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStats() {
+  const s = document.getElementById('statsStrip');
+  const counts = {LITE:0,CONFORT:0,XL:0,XLCONFORT:0,VAN:0};
+  vehicles.forEach(v=>counts[v.cat]++);
+  s.innerHTML = `
+    <div class="stat-box"><div class="sb-num">${vehicles.length}</div><div class="sb-label">Total</div></div>
+    <div class="stat-box s-lite"><div class="sb-num">${counts.LITE}</div><div class="sb-label">🚗 LITE</div></div>
+    <div class="stat-box s-confort"><div class="sb-num">${counts.CONFORT}</div><div class="sb-label">🚙 CONFORT</div></div>
+    <div class="stat-box s-xl"><div class="sb-num">${counts.XL}</div><div class="sb-label">🛻 XL</div></div>
+    <div class="stat-box" style="background:#f5f3ff;"><div class="sb-num" style="color:#7c3aed;">${counts.XLCONFORT||0}</div><div class="sb-label" style="color:#7c3aed;">🚐 XL CONFORT</div></div>
+    <div class="stat-box s-van"><div class="sb-num">${counts.VAN}</div><div class="sb-label">🚌 VAN</div></div>
+    <div class="stat-box"><div class="sb-num">${vehicles.filter(v=>v.origin==='China').length}</div><div class="sb-label">🇨🇳 Chinos</div></div>`;
+}
+
+// ── ADD MODAL ─────────────────────────────────
+function openAddModal()  { document.getElementById('addModal').style.display='flex'; }
+function closeAddModal() { document.getElementById('addModal').style.display='none'; }
+function closeModalClick(e) { if(e.target.id==='addModal') closeAddModal(); }
+
+async function saveVehicle() {
+  const brand = document.getElementById('a_brand').value.trim();
+  const model = document.getElementById('a_model').value.trim();
+  if (!brand||!model) { alert('Marca y modelo son obligatorios.'); return; }
+  const v = {
+    id: Date.now(),
+    brand, model,
+    year:        parseInt(document.getElementById('a_year').value)||2024,
+    pax:         parseInt(document.getElementById('a_pax').value)||5,
+    length:      parseFloat(document.getElementById('a_len').value)||0,
+    width:       parseFloat(document.getElementById('a_width').value)||0,
+    height:      parseFloat(document.getElementById('a_height').value)||0,
+    luggage:     parseInt(document.getElementById('a_lug').value)||0,
+    body:        document.getElementById('a_body').value||'Sedan',
+    vehicleType: document.getElementById('a_vtype').value||'Auto',
+    origin:      document.getElementById('a_origin').value||'Otra',
+    custom:      true,
+  };
+  v.cat = classifyCap(v);
+  vehicles.push(v);
+  await persist();
+  closeAddModal();
+  renderTable();
+  renderStats();
+  // limpiar
+  ['a_brand','a_model','a_year','a_pax','a_len','a_width','a_height','a_lug'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ── DIRECTO (admitida en directo) ────────────
+function getDirectoData() {
+  try {
+    const raw = localStorage.getItem('fleetiq_directo');
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+
+function deleteVehicle(vid, vId) {
+  if (!confirm('¿Eliminar este vehículo del catálogo?\nNo volverá a aparecer aunque recargues o cierres el archivo.')) return;
+  const deleted = getDeletedVehicles();
+  if (!deleted.includes(vid)) {
+    deleted.push(vid);
+    try { localStorage.setItem('fleetiq_deleted', JSON.stringify(deleted)); } catch{}
+  }
+  vehicles = vehicles.filter(v => v._key !== vid);
+  renderTable();
+  renderStats();
+}
+
+function setDirecto(vid, sel) {
+  const val = sel.value;
+  sel.className = 'sel-directo ' + val;
+  try {
+    const data = getDirectoData();
+    data[vid] = val;
+    localStorage.setItem('fleetiq_directo', JSON.stringify(data));
+  } catch {}
+}
+
+
+
+// ── VEHICLE EDITOR ────────────────────────────
+function getVehicleEdits() {
+  try { return JSON.parse(localStorage.getItem('fleetiq_vehicle_edits')||'{}'); } catch{ return {}; }
+}
+function saveVehicleEdits(data) {
+  try { localStorage.setItem('fleetiq_vehicle_edits', JSON.stringify(data)); } catch{}
+}
+
+function renderVehicleEditor() {
+  const q    = (document.getElementById('ve_search')?.value||'').toLowerCase();
+  const src  = document.getElementById('ve_source')?.value||'';
+  const edits = getVehicleEdits();
+
+  let filtered = vehicles.filter(v => {
+    const matchQ   = !q || v.brand.toLowerCase().includes(q) || v.model.toLowerCase().includes(q);
+    const matchSrc = !src || v.source === src;
+    return matchQ && matchSrc;
+  });
+
+  if (!filtered.length) {
+    document.getElementById('vehicle-editor-table').innerHTML =
+      '<p style="color:#9ca3af;font-size:0.85rem;padding:1rem 0;">No se encontraron vehículos.</p>';
+    return;
+  }
+
+  const BODIES = ['Sedan','Hatchback','Coupe','SUV Compacto','SUV Mediano','SUV Grande','Pickup','Van'];
+  const ORIGINS = ['Japonesa','Coreana','Americana','Europea','China'];
+  const VTYPES = ['Auto','Camioneta'];
+  const CATS = ['LITE','CONFORT','XL','XLCONFORT','VAN'];
+
+  const rows = filtered.map(v => {
+    const k = v._key;
+    const hasEdit = !!edits[k];
+    const srcCls = v.source === 'Excel CCC' ? 'excel' : 'base';
+    return `<tr id="ve-row-${k.replace(/[^a-z0-9]/gi,'_')}">
+      <td style="white-space:nowrap;">
+        <span class="ve-source-badge ${srcCls}">${v.source}</span>
+        ${hasEdit ? '<span class="ve-edited-mark" title="Editado">✏️</span>' : ''}
+      </td>
+      <td><input class="ve-edit-input" id="ve_brand_${k}" value="${v.brand}" style="min-width:90px;"/></td>
+      <td><input class="ve-edit-input" id="ve_model_${k}" value="${v.model}" style="min-width:90px;"/></td>
+      <td><input class="ve-edit-input" type="number" id="ve_year_${k}" value="${v.year}" style="width:60px;"/></td>
+      <td><input class="ve-edit-input" type="number" id="ve_pax_${k}" value="${v.pax}" style="width:45px;" min="1" max="30"/></td>
+      <td><input class="ve-edit-input" type="number" id="ve_length_${k}" value="${v.length}" style="width:60px;" step="0.01"/></td>
+      <td><input class="ve-edit-input" type="number" id="ve_luggage_${k}" value="${v.luggage}" style="width:60px;" step="10"/></td>
+      <td><input class="ve-edit-input" type="number" id="ve_width_${k}" value="${v.width||''}" style="width:55px;" step="0.01"/></td>
+      <td><input class="ve-edit-input" type="number" id="ve_height_${k}" value="${v.height||''}" style="width:55px;" step="0.01"/></td>
+      <td><select class="ve-edit-input" id="ve_body_${k}" style="min-width:110px;">${BODIES.map(b=>`<option ${v.body===b?'selected':''}>${b}</option>`).join('')}</select></td>
+      <td><select class="ve-edit-input" id="ve_origin_${k}" style="min-width:90px;">${ORIGINS.map(o=>`<option ${v.origin===o?'selected':''}>${o}</option>`).join('')}</select></td>
+      <td><select class="ve-edit-input" id="ve_vehicleType_${k}" style="min-width:90px;">${VTYPES.map(t=>`<option ${v.vehicleType===t?'selected':''}>${t}</option>`).join('')}</select></td>
+      <td style="white-space:nowrap;">
+        <button class="ve-save-btn" onclick="saveVehicleRow('${k}')">💾</button>
+        ${hasEdit ? `<button class="ve-reset-btn" onclick="resetVehicleRow('${k}')" title="Quitar ediciones">↩</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('vehicle-editor-table').innerHTML = `
+    <table class="ve-table">
+      <thead><tr>
+        <th>Fuente</th><th>Marca</th><th>Modelo</th><th>Año</th>
+        <th>PAX</th><th>Long.(m)</th><th>Equip.(L)</th>
+        <th>Ancho</th><th>Alto</th><th>Carrocería</th>
+        <th>Origen</th><th>Tipo</th><th>Acción</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="color:#9ca3af;font-size:0.72rem;margin-top:0.5rem;">${filtered.length < vehicles.filter(v=>(!document.getElementById('ve_source')?.value||v.source===document.getElementById('ve_source')?.value)).length ? `Mostrando ${filtered.length} de ${vehicles.length} — filtra para ver más.` : ''}</p>`;
+}
+
+function saveVehicleRow(k) {
+  const edits = getVehicleEdits();
+  const safe = k.replace(/[^a-z0-9_]/gi,'_');
+  const newData = {
+    brand:       document.getElementById('ve_brand_'+k)?.value || '',
+    model:       document.getElementById('ve_model_'+k)?.value || '',
+    year:        parseInt(document.getElementById('ve_year_'+k)?.value)||2023,
+    pax:         parseInt(document.getElementById('ve_pax_'+k)?.value)||5,
+    length:      parseFloat(document.getElementById('ve_length_'+k)?.value)||4.5,
+    luggage:     parseInt(document.getElementById('ve_luggage_'+k)?.value)||0,
+    width:       parseFloat(document.getElementById('ve_width_'+k)?.value)||0,
+    height:      parseFloat(document.getElementById('ve_height_'+k)?.value)||0,
+    body:        document.getElementById('ve_body_'+k)?.value || 'Sedan',
+    origin:      document.getElementById('ve_origin_'+k)?.value || 'China',
+    vehicleType: document.getElementById('ve_vehicleType_'+k)?.value || 'Auto',
+  };
+  edits[k] = newData;
+  saveVehicleEdits(edits);
+  // Actualizar el vehículo en memoria
+  const idx = vehicles.findIndex(v => v._key === k);
+  if (idx !== -1) {
+    const src = vehicles[idx].source;
+    vehicles[idx] = {...vehicles[idx], ...newData, cat: classifyCap(newData), source: src, _key: k};
+  }
+  renderTable();
+  renderStats();
+  renderVehicleEditor();
+  const msg = document.getElementById('ve-saved-msg');
+  msg.textContent = `✅ Guardado: ${newData.brand} ${newData.model}`;
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 2500);
+}
+
+function resetVehicleRow(k) {
+  if (!confirm('¿Quitar las ediciones de este vehículo y volver al dato original?')) return;
+  const edits = getVehicleEdits();
+  delete edits[k];
+  saveVehicleEdits(edits);
+  // Recargar este vehículo desde VEHICLES_DB original
+  const origIdx = vehicles.findIndex(v => v._key === k);
+  if (origIdx !== -1) {
+    const dbIdx = origIdx; // mismo índice en VEHICLES_DB
+    const orig = VEHICLES_DB[dbIdx];
+    if (orig) {
+      vehicles[origIdx] = {...orig, cat: classifyCap(orig), id: origIdx+1, source: vehicles[origIdx].source, _key: k};
+    }
+  }
+  renderTable();
+  renderStats();
+  renderVehicleEditor();
+  const msg = document.getElementById('ve-saved-msg');
+  msg.textContent = '↩ Datos originales restaurados.';
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 2500);
+}
+
+// ── ADMIN PARAMS ──────────────────────────────
+function loadAdminForm() {
+  const p = getAdminParams();
+  for (const [key, val] of Object.entries(p)) {
+    const el = document.getElementById('ap_' + key);
+    if (el) el.value = val;
+  }
+  renderAdminPreview();
+  renderVehicleEditor();
+}
+
+function saveAdminParams() {
+  const p = {};
+  const keys = Object.keys(DEFAULT_PARAMS);
+  for (const key of keys) {
+    const el = document.getElementById('ap_' + key);
+    if (el) p[key] = parseFloat(el.value);
+  }
+  try {
+    localStorage.setItem('fleetiq_admin_params', JSON.stringify(p));
+  } catch(e) {}
+  // Recalcular categorías de todos los vehículos
+  vehicles = vehicles.map(v => ({...v, cat: classifyCap(v)}));
+  renderTable();
+  renderStats();
+  renderAdminPreview();
+  const msg = document.getElementById('admin-saved-msg');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 3000);
+}
+
+function resetAdminParams() {
+  if (!confirm('¿Restablecer todos los parámetros a los valores por defecto?')) return;
+  try { localStorage.removeItem('fleetiq_admin_params'); } catch(e) {}
+  loadAdminForm();
+  vehicles = vehicles.map(v => ({...v, cat: classifyCap(v)}));
+  renderTable();
+  renderStats();
+  const msg = document.getElementById('admin-saved-msg');
+  msg.textContent = '↩ Valores restablecidos y clasificación recalculada.';
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; msg.textContent = '✅ Parámetros guardados y clasificación recalculada.'; }, 3000);
+}
+
+function renderAdminPreview() {
+  const p = getAdminParams();
+  const counts = {LITE:0,CONFORT:0,XL:0,XLCONFORT:0,VAN:0};
+  vehicles.forEach(v => { if(counts[v.cat]!==undefined) counts[v.cat]++; });
+  const rows = [
+    {cat:'LITE',      icon:'🚗', label:'LITE',       bg:'#ecfdf5', color:'#059669', desc:`PAX ≤${p.lite_pax_max} · Equip. ≤${p.lite_lug_max}L · Long. ≤${p.lite_len_max}m · ${p.lite_maletas_min}-${p.lite_maletas_max} maletas`},
+    {cat:'CONFORT',   icon:'🚙', label:'CONFORT',     bg:'#eff6ff', color:'#2563eb', desc:`PAX ≤${p.confort_pax_max} · Equip. ${p.confort_lug_min}-${p.confort_lug_max}L · Long. ${p.confort_len_min}-${p.confort_len_max}m · ${p.confort_maletas_min}-${p.confort_maletas_max} maletas`},
+    {cat:'XL',        icon:'🛻', label:'XL',          bg:'#fff7ed', color:'#ea580c', desc:`PAX ${p.xl_pax_min}-${p.xl_pax_max} · Equip. ${p.xl_lug_min}-${p.xl_lug_max}L · Long. ≥${p.xl_len_min}m · ${p.xl_maletas_min}-${p.xl_maletas_max} maletas`},
+    {cat:'XLCONFORT', icon:'🚐', label:'XL CONFORT',  bg:'#f5f3ff', color:'#7c3aed', desc:`PAX ${p.xlc_pax_min}-${p.xlc_pax_max} · Equip. ≥${p.xlc_lug_min}L · Long. ≥${p.xlc_len_min}m · ${p.xlc_maletas_min}-${p.xlc_maletas_max} maletas`},
+    {cat:'VAN',       icon:'🚌', label:'VAN',          bg:'#fdf4ff', color:'#a21caf', desc:`PAX ≥${p.van_pax_min} o carrocería Van · ${p.van_maletas_min}-${p.van_maletas_max} maletas`},
+  ];
+  document.getElementById('admin-preview-table').innerHTML = rows.map(r => `
+    <div class="admin-preview-row" style="background:${r.bg}20;border:1px solid ${r.color}30;">
+      <span style="font-weight:700;color:${r.color};min-width:100px;">${r.icon} ${r.label}</span>
+      <span style="color:#6b7280;flex:1;font-size:0.8rem;">${r.desc}</span>
+      <span style="font-weight:700;color:${r.color};font-size:1rem;">${counts[r.cat]||0} <span style="font-size:0.72rem;font-weight:400;">vehículos</span></span>
+    </div>`).join('');
+}
+
+
+// ── GESTIÓN DE ELIMINADOS ─────────────────────
+function showDeletedManager() {
+  const box = document.getElementById('deleted-manager');
+  const deleted = getDeletedVehicles();
+  if (!deleted.length) {
+    box.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay vehículos eliminados.</p>';
+    box.style.display = 'block';
+    return;
+  }
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div style="font-weight:700;font-size:0.9rem;color:#b91c1c;margin-bottom:0.8rem;">🗑 Vehículos eliminados (${deleted.length})</div>
+    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:0.8rem;">Haz clic en ↩ para restaurar un vehículo al catálogo.</div>
+    ${deleted.map(k => {
+      const parts = k.split('_');
+      const year = parts[parts.length-1];
+      const brand = parts[0];
+      const model = parts.slice(1, -1).join(' ');
+      return `<div style="display:flex;align-items:center;gap:0.8rem;padding:0.4rem 0;border-bottom:1px solid #fee2e2;">
+        <span style="flex:1;font-size:0.85rem;font-weight:600;">${brand} <span style="font-weight:400;">${model}</span> <span style="color:#9ca3af;">${year}</span></span>
+        <button onclick="restoreVehicle('${k}')" style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:0.25rem 0.8rem;font-size:0.78rem;font-weight:700;cursor:pointer;">↩ Restaurar</button>
+      </div>`;
+    }).join('')}
+    <button onclick="restoreAllVehicles()" style="margin-top:0.8rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:0.4rem 1rem;font-size:0.8rem;font-weight:600;cursor:pointer;">↩ Restaurar todos</button>
+  `;
+}
+
+function restoreVehicle(key) {
+  let deleted = getDeletedVehicles();
+  deleted = deleted.filter(k => k !== key);
+  try { localStorage.setItem('fleetiq_deleted', JSON.stringify(deleted)); } catch{}
+  loadDB();
+  showDeletedManager();
+}
+
+function restoreAllVehicles() {
+  if (!confirm('¿Restaurar todos los vehículos eliminados?')) return;
+  try { localStorage.removeItem('fleetiq_deleted'); } catch{}
+  loadDB();
+  showDeletedManager();
+}
+
+// ── CRITERIOS DE ADMISIÓN ─────────────────────
+const CRITERIO_COLS = {
+  pax: 'Pasajeros (PAX)', length: 'Longitud (m)', luggage: 'Equipaje (L)',
+  width: 'Ancho (m)', height: 'Alto (m)', year: 'Año'
+};
+
+function getCriterios() {
+  try { return JSON.parse(localStorage.getItem('fleetiq_criterios')||'[]'); } catch { return []; }
+}
+function saveCriterios(arr) {
+  try { localStorage.setItem('fleetiq_criterios', JSON.stringify(arr)); } catch {}
+}
+
+function toggleCriteriosPanel() {
+  const panel = document.getElementById('criterios-panel');
+  const open  = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (!open) renderCriteriosList();
+}
+
+function agregarCriterio() {
+  const col = document.getElementById('cr_col').value;
+  const op  = document.getElementById('cr_op').value;
+  const val = parseFloat(document.getElementById('cr_val').value);
+  const msg = document.getElementById('cr_msg');
+  if (!col) { msg.textContent = 'Selecciona una columna.'; msg.style.color='#dc2626'; return; }
+  if (isNaN(val)) { msg.textContent = 'Ingresa un valor numérico.'; msg.style.color='#dc2626'; return; }
+  const criterios = getCriterios();
+  criterios.push({col, op, val, id: Date.now()});
+  saveCriterios(criterios);
+  msg.textContent = '✓ Criterio guardado.'; msg.style.color='#059669';
+  document.getElementById('cr_val').value = '';
+  renderCriteriosList();
+  renderTable();
+  setTimeout(()=>{ msg.textContent=''; }, 2000);
+}
+
+function borrarCriterio(id) {
+  const criterios = getCriterios().filter(c => c.id !== id);
+  saveCriterios(criterios);
+  renderCriteriosList();
+  renderTable();
+}
+
+function borrarTodosCriterios() {
+  if (!confirm('¿Eliminar todos los criterios de admisión?')) return;
+  saveCriterios([]);
+  renderCriteriosList();
+  renderTable();
+}
+
+function renderCriteriosList() {
+  const lista = document.getElementById('criterios-lista');
+  const criterios = getCriterios();
+  const opLabel = {gte:'≥', lte:'≤', eq:'='};
+  if (!criterios.length) {
+    lista.innerHTML = '<span style="font-size:0.82rem;color:#9ca3af;">Sin criterios guardados.</span>';
+    return;
+  }
+  lista.innerHTML = criterios.map(cr =>
+    '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;">'
+    + '<span style="flex:1;font-size:0.84rem;font-weight:600;">' + (CRITERIO_COLS[cr.col]||cr.col) + ' ' + (opLabel[cr.op]||cr.op) + ' <span style="color:#4f46e5;">' + cr.val + '</span></span>'
+    + '<button onclick="borrarCriterio(' + cr.id + ')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 10px;font-size:0.78rem;font-weight:700;cursor:pointer;">✕ Borrar</button>'
+    + '</div>'
+  ).join('');
+}
+
+function clearColFilter() {
+  document.getElementById('fColKey').value = '';
+  document.getElementById('fColVal').value = '';
+  renderTable();
+}
+
+// ── INIT ──────────────────────────────────────
+loadDB();   // carga inmediata y sincrónica
+init();     // carga custom en segundo plano
+</script>
+
+
+<!-- ════════════════ PAGE ADMIN ════════════════ -->
+<div class="page" id="page-admin">
+<div style="max-width:100%;margin:2rem 1rem;padding:0 1rem 4rem;">
+
+  <h2 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:0.3rem;">⚙️ Administrador</h2>
+  <p style="color:#6b7280;font-size:0.88rem;margin-bottom:2rem;">Ajusta los parámetros de clasificación según las necesidades de Directo. Los cambios se guardan automáticamente.</p>
+
+  <div id="admin-saved-msg" style="display:none;background:#dcfce7;color:#15803d;border-radius:8px;padding:0.7rem 1.2rem;font-weight:600;margin-bottom:1.2rem;font-size:0.88rem;">✅ Parámetros guardados y clasificación recalculada.</div>
+
+  <!-- SECCIÓN LITE -->
+  <div class="admin-section">
+    <div class="admin-sec-title"><span class="rb LITE">🚗 LITE</span></div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <label>Pasajeros máx. (sin conductor)</label>
+        <input type="number" id="ap_lite_pax_max" min="1" max="10" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Equipaje máx. (L)</label>
+        <input type="number" id="ap_lite_lug_max" min="100" max="2000" step="10"/>
+      </div>
+      <div class="admin-field">
+        <label>Longitud máx. (m)</label>
+        <input type="number" id="ap_lite_len_max" min="3.0" max="6.0" step="0.05"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas mín.</label>
+        <input type="number" id="ap_lite_maletas_min" min="0" max="20" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas máx.</label>
+        <input type="number" id="ap_lite_maletas_max" min="0" max="20" step="1"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN CONFORT -->
+  <div class="admin-section">
+    <div class="admin-sec-title"><span class="rb CONFORT">🚙 CONFORT</span></div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <label>Pasajeros máx. (sin conductor)</label>
+        <input type="number" id="ap_confort_pax_max" min="1" max="10" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Equipaje mín. (L)</label>
+        <input type="number" id="ap_confort_lug_min" min="100" max="2000" step="10"/>
+      </div>
+      <div class="admin-field">
+        <label>Equipaje máx. (L)</label>
+        <input type="number" id="ap_confort_lug_max" min="100" max="2000" step="10"/>
+      </div>
+      <div class="admin-field">
+        <label>Longitud mín. (m)</label>
+        <input type="number" id="ap_confort_len_min" min="3.0" max="6.0" step="0.05"/>
+      </div>
+      <div class="admin-field">
+        <label>Longitud máx. (m)</label>
+        <input type="number" id="ap_confort_len_max" min="3.0" max="6.0" step="0.05"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas mín.</label>
+        <input type="number" id="ap_confort_maletas_min" min="0" max="20" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas máx.</label>
+        <input type="number" id="ap_confort_maletas_max" min="0" max="20" step="1"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN XL -->
+  <div class="admin-section">
+    <div class="admin-sec-title"><span class="rb XL">🛻 XL</span></div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <label>Pasajeros mín. (sin conductor)</label>
+        <input type="number" id="ap_xl_pax_min" min="1" max="10" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Pasajeros máx. (sin conductor)</label>
+        <input type="number" id="ap_xl_pax_max" min="1" max="10" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Equipaje mín. (L)</label>
+        <input type="number" id="ap_xl_lug_min" min="100" max="2000" step="10"/>
+      </div>
+      <div class="admin-field">
+        <label>Equipaje máx. (L)</label>
+        <input type="number" id="ap_xl_lug_max" min="100" max="2000" step="10"/>
+      </div>
+      <div class="admin-field">
+        <label>Longitud mín. (m)</label>
+        <input type="number" id="ap_xl_len_min" min="3.0" max="6.0" step="0.05"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas mín.</label>
+        <input type="number" id="ap_xl_maletas_min" min="0" max="20" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas máx.</label>
+        <input type="number" id="ap_xl_maletas_max" min="0" max="20" step="1"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN XL CONFORT -->
+  <div class="admin-section">
+    <div class="admin-sec-title"><span class="rb XLCONFORT">🚐 XL CONFORT</span></div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <label>Pasajeros mín. (sin conductor)</label>
+        <input type="number" id="ap_xlc_pax_min" min="1" max="10" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Pasajeros máx. (sin conductor)</label>
+        <input type="number" id="ap_xlc_pax_max" min="1" max="10" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Equipaje mín. (L)</label>
+        <input type="number" id="ap_xlc_lug_min" min="100" max="3000" step="10"/>
+      </div>
+      <div class="admin-field">
+        <label>Longitud mín. (m)</label>
+        <input type="number" id="ap_xlc_len_min" min="3.0" max="6.5" step="0.05"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas mín.</label>
+        <input type="number" id="ap_xlc_maletas_min" min="0" max="20" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas máx.</label>
+        <input type="number" id="ap_xlc_maletas_max" min="0" max="20" step="1"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN VAN -->
+  <div class="admin-section">
+    <div class="admin-sec-title"><span class="rb VAN">🚌 VAN</span></div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <label>Pasajeros mín. (sin conductor)</label>
+        <input type="number" id="ap_van_pax_min" min="1" max="30" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas mín.</label>
+        <input type="number" id="ap_van_maletas_min" min="0" max="30" step="1"/>
+      </div>
+      <div class="admin-field">
+        <label>Maletas máx.</label>
+        <input type="number" id="ap_van_maletas_max" min="0" max="30" step="1"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTONES -->
+  <div style="display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap;">
+    <button onclick="saveAdminParams()" style="background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:0.7rem 2rem;font-weight:700;font-size:0.95rem;cursor:pointer;">💾 Guardar y recalcular</button>
+    <button onclick="resetAdminParams()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:8px;padding:0.7rem 1.5rem;font-weight:600;font-size:0.9rem;cursor:pointer;">↩ Restablecer valores por defecto</button>
+    <button onclick="showDeletedManager()" style="background:#fff1f2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:0.7rem 1.5rem;font-weight:600;font-size:0.9rem;cursor:pointer;">🗑 Gestionar eliminados</button>
+  </div>
+  <div id="deleted-manager" style="display:none;margin-top:1.2rem;background:#fff8f8;border:1.5px solid #fca5a5;border-radius:10px;padding:1.2rem;"></div>
+
+  <!-- TABLA PREVIA -->
+  <div style="margin-top:2.5rem;">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.8rem;color:#374151;">Resumen actual de categorías</h3>
+    <div id="admin-preview-table"></div>
+  </div>
+
+  <!-- ─── EDITOR DE VEHÍCULOS ─── -->
+  <div style="margin-top:3rem;">
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:0.3rem;color:#1a1a2e;">✏️ Editor de vehículos</h3>
+    <p style="color:#6b7280;font-size:0.82rem;margin-bottom:1rem;">Busca un vehículo y edita sus datos. Los cambios sobrescriben la base original y se guardan en el navegador.</p>
+    <div style="display:flex;gap:0.6rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <input id="ve_search" type="text" placeholder="Buscar marca o modelo..." oninput="renderVehicleEditor()"
+        style="flex:1;min-width:200px;padding:0.5rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.88rem;"/>
+      <select id="ve_source" onchange="renderVehicleEditor()"
+        style="padding:0.5rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.85rem;background:#fff;">
+        <option value="">Todas las fuentes</option>
+        <option value="Base interna">Base interna</option>
+        <option value="Excel CCC">Excel CCC</option>
+      </select>
+    </div>
+    <div id="ve-saved-msg" style="display:none;background:#dcfce7;color:#15803d;border-radius:8px;padding:0.55rem 1rem;font-weight:600;margin-bottom:0.8rem;font-size:0.82rem;"></div>
+    <div id="vehicle-editor-table" style="overflow-x:auto;width:100%;"></div>
+  </div>
+
+</div>
+</div>
+<!-- ════════════════ END ADMIN ════════════════ -->
+
+
+<!-- ══ ADMIN LOGIN MODAL ══ -->
+<div id="adminLoginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:2.2rem 2rem;width:340px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+    <div style="text-align:center;margin-bottom:1.4rem;">
+      <div style="font-size:2.2rem;margin-bottom:0.4rem;">🔐</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#1a1a2e;">Administrador</div>
+      <div style="font-size:0.8rem;color:#9ca3af;margin-top:0.2rem;">Ingresa la contraseña para continuar</div>
+    </div>
+    <input id="adminPassInput" type="password" placeholder="Contraseña"
+      onkeydown="if(event.key==='Enter')submitAdminLogin()"
+      style="width:100%;padding:0.65rem 1rem;border:1.5px solid #d1d5db;border-radius:9px;font-size:1rem;font-family:'Inter',sans-serif;color:#1a1a2e;background:#f9fafb;box-sizing:border-box;margin-bottom:0.5rem;"/>
+    <div id="adminPassErr" style="display:none;color:#b91c1c;font-size:0.8rem;font-weight:600;margin-bottom:0.6rem;">❌ Contraseña incorrecta</div>
+    <div style="display:flex;gap:0.7rem;margin-top:0.8rem;">
+      <button onclick="submitAdminLogin()" style="flex:1;background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:0.65rem;font-weight:700;font-size:0.95rem;cursor:pointer;">Ingresar</button>
+      <button onclick="closeAdminLogin()" style="background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:8px;padding:0.65rem 1rem;font-weight:600;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Pre-cargar "NO INGRESA" del Excel en localStorage
+(function(){
+  try {
+    var existing = JSON.parse(localStorage.getItem('fleetiq_directo')||'{}');
+    var noIngresa = {"Changan_Honor_2023":"no","Changan_Van Turismo_2023":"no","Chery_K60_2023":"no","Chevrolet_N300_2023":"no","Chevrolet_N400_2023":"no","Geely_GX3_2023":"no","Great Wall_M4_2023":"no","Kia_Sonet_2023":"no","Mitsubishi_Space Star_2023":"no","Toyota_Agya_2023":"no","Hyundai_Grand I10 - Hatchback_2023":"no","Changan_CS15_2023":"no","Chevrolet_Spark GT_2023":"no","Chery_Tiggo 2_2023":"no","Great Wall_M4_2023":"no","Geely_GX3_2023":"no","Renault_Kwid_2023":"no","Suzuki_New Alto_2023":"no","JAC_JS2_2023":"no"};
+    var changed = false;
+    for(var k in noIngresa){
+      if(!(k in existing)){ existing[k] = noIngresa[k]; changed = true; }
+    }
+    if(changed) localStorage.setItem('fleetiq_directo', JSON.stringify(existing));
+  } catch(e){}
+})();
+</script>
+</body>
+</html>
